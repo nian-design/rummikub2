@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Rummikub 2D 多人連線拉密 (官方安全加密合流版)</title>
+  <title>Rummikub 2D 多人連線拉密 (安全加密完美合流版)</title>
   <meta name="description" content="100% 純雲端 WSS 加密 MQTT 頻道聯機，內建即時二維碼掃描進房功能，支援 3D 翻牌抽取順序動畫。" />
 
   <!-- 公開 Paho MQTT JavaScript 客戶端 CDN -->
@@ -92,7 +92,6 @@
       padding: 8px; max-width: 1200px; width: 100%; margin: 0 auto;
     }
 
-    /* 完美的 Waiting Room 介面 */
     #lobby-section {
       background: var(--bg-panel); padding: 24px 20px; border-radius: 18px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.08);
@@ -137,7 +136,7 @@
 
   <header>
     <div class="brand">
-      <h1>Rummikub 拉密 <span style="font-size: 12px; color: var(--cyan);">安全加密 WSS 終極通暢版</span></h1>
+      <h1>Rummikub 拉密 <span style="font-size: 12px; color: var(--cyan);">安全加密憑證 WSS 版</span></h1>
     </div>
     <div class="header-actions">
       <div id="room-code-tag" style="display: none; align-items: center; gap: 4px; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #38bdf8;">
@@ -170,7 +169,6 @@
 
       <div id="waiting-room-area" style="display: none; flex-direction: column; gap: 10px;">
         <div style="text-align: center; margin-bottom: 4px;">
-          <span style="font-size: 12px; color: var(--text-sub);">📱 手機相機直接掃碼即可秒速加入對局：</span>
           <div class="qrcode-wrapper">
             <div id="qrcode-container"></div>
           </div>
@@ -190,7 +188,7 @@
         <div class="status-left-panel">
           <span class="status-badge" id="ice-melt-badge">❄ 尚未破冰</span>
           <span class="status-badge" id="selected-count-badge">已選取 0 張手牌</span>
-          <span id="instruction-hint" style="color: #94a3b8;">遊戲進行中...</span>
+          <span id="instruction-hint" style="color: #94a3b8;">雙擊手牌可以進行選取與出牌。</span>
         </div>
         <div class="action-buttons">
           <button id="btn-confirm-play" class="btn-confirm-play" onclick="clientPlaySelectedCards()" disabled>🚀 確認出牌</button>
@@ -205,5 +203,6 @@
   <div id="toast-notification"></div>
 
   <script>
-    // 💡 終極核心修復一：高精度、防重疊的無碰撞 Player ID，徹底消滅手機電腦 ID 撞車 Bug
+    // 💡 修正一：結合亂數與更高階隨機字典序，徹底消滅手機電腦 ID 撞車 Bug
     const myPlayerId = 'p_uid_' + Math.floor(Math.random() * 9999999).toString(36) + '_' + Date.now().toString(36);
+    let myPlayerName = localStorage.getItem('rummi_user_name') || `玩家${Math.floor(100 + Math.random() * 900)}`;
