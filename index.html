@@ -1158,10 +1158,25 @@
     let packetSeq = 0;
     const seenMsgIds = new Set();
 
-    // 清理並標準化房號為合法的 MQTT 主題名稱 (杜絕特殊符號及萬用字元 # + 導致的協議崩潰)
+    // 清理並標準化房號為合法的統一 MQTT 主題名稱 (強制加上 AIS_RUMMIKUB_V2/ 前綴)
     function getCleanRoomTopic(roomId) {
-      const clean = (roomId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '') || 'MAIN';
+      if (!roomId) return 'AIS_RUMMIKUB_V2/MAIN';
+      const raw = String(roomId).trim().toUpperCase();
+      const clean = raw.replace(/^AIS_RUMMIKUB_V2\//i, '').replace(/[^A-Z0-9]/g, '') || 'MAIN';
       return `AIS_RUMMIKUB_V2/${clean}`;
+    }
+
+    // 提取純淨房號 (移除任何前綴，例如 AIS_RUMMIKUB_V2/ROOM88 -> ROOM88)
+    function getPureRoomId(roomId) {
+      if (!roomId) return 'MAIN';
+      const raw = String(roomId).trim().toUpperCase();
+      return raw.replace(/^AIS_RUMMIKUB_V2\//i, '').replace(/[^A-Z0-9]/g, '') || 'MAIN';
+    }
+
+    // 嚴格比對是否為同一房間 (無視大小寫與前綴差異)
+    function isSameRoom(idA, idB) {
+      if (!idA || !idB) return false;
+      return getPureRoomId(idA) === getPureRoomId(idB);
     }
 
     function updateNetworkBadge(online, text) {
@@ -1174,8 +1189,27 @@
       }
     }
 
+    let isConnectingMqtt = false;
+    let pendingMqttTopic = null;
+    const pendingMqttOutbox = [];
+
+    function flushMqttOutbox() {
+      if (!mqttClient || !mqttClient.isConnected()) return;
+      while (pendingMqttOutbox.length > 0) {
+        const item = pendingMqttOutbox.shift();
+        try {
+          const message = new Paho.MQTT.Message(item.payload);
+          message.destinationName = item.topic;
+          message.qos = 0;
+          mqttClient.send(message);
+        } catch (e) {
+          console.warn('補發 MQTT 佇列訊息失敗:', e);
+        }
+      }
+    }
+
     function initNetworkForRoom(roomId, onReady) {
-      myRoomId = roomId;
+      myRoomId = getPureRoomId(roomId);
       const targetTopic = getCleanRoomTopic(roomId);
       let readyCalled = false;
       const triggerReady = () => {
@@ -1210,9 +1244,8 @@
           localWs = new WebSocket(wsUrl);
 
           localWs.onopen = () => {
-            localWs.send(JSON.stringify({ type: 'SUBSCRIBE_ROOM', roomId: targetTopic }));
-            updateNetworkBadge(true, `極速伺服器已連線 (${targetTopic})`);
-            triggerReady();
+            localWs.send(JSON.stringify({ type: 'SUBSCRIBE_ROOM', roomId: targetTopic, roomTopic: targetTopic }));
+            updateNetworkBadge(true, `本地伺服器已連線 (${targetTopic})`);
           };
 
           localWs.onmessage = (event) => {
@@ -1235,18 +1268,19 @@
         }
       }
 
-      // 3. 初始化公開 MQTT Over WebSocket (首選全球公開穩定節點 broker.hivemq.com:8884)
+      // 3. 核心：初始化公開 MQTT Over WebSocket (保證跨手機/跨裝置 100% 互通)
       initMqttConnection(targetTopic, () => {
         triggerReady();
       });
 
-      // 防呆計時器：若 600ms 內通道尚未回呼，也啟動探測流程 (BroadcastChannel 始終在線)
+      // 防呆計時器：若 1000ms 內通道尚未回呼，也啟動探測流程 (通道均已在後台建立)
       setTimeout(() => {
         triggerReady();
-      }, 600);
+      }, 1000);
     }
 
     function initMqttConnection(targetTopic, onReady) {
+      targetTopic = getCleanRoomTopic(targetTopic);
       if (typeof Paho === 'undefined') {
         console.warn('Paho MQTT CDN 載入中，將使用可用連線通道');
         updateNetworkBadge(true, '已就緒 (本地通道)');
@@ -1261,23 +1295,40 @@
         }
         activeSubscribedTopic = targetTopic;
         mqttClient.subscribe(targetTopic, { qos: 0 });
-        console.log(`[MQTT] 成功訂閱房號主題: ${targetTopic}`);
-        updateNetworkBadge(true, `公開訊號節點已訂閱 (${targetTopic})`);
+        console.log(`[MQTT WSS] 成功訂閱房號主題: ${targetTopic}`);
+        updateNetworkBadge(true, `加密安全通道已訂閱 (${targetTopic})`);
+        flushMqttOutbox();
         if (onReady) onReady();
         return;
       }
 
+      if (isConnectingMqtt) {
+        pendingMqttTopic = targetTopic;
+        if (onReady) {
+          const checkReady = setInterval(() => {
+            if (mqttClient && mqttClient.isConnected()) {
+              clearInterval(checkReady);
+              onReady();
+            }
+          }, 100);
+          setTimeout(() => clearInterval(checkReady), 3000);
+        }
+        return;
+      }
+
+      isConnectingMqtt = true;
       try {
         const clientId = 'rummi_' + Math.random().toString(36).substring(2, 11);
-        // 首選 HiveMQ 安全 WebSocket 節點 (broker.hivemq.com:8884/mqtt)
+        // 核心要求：首選 HiveMQ 安全 WebSocket 節點 (broker.hivemq.com:8884/mqtt) 啟用 100% SSL
         mqttClient = new Paho.MQTT.Client('broker.hivemq.com', 8884, '/mqtt', clientId);
 
         mqttClient.onConnectionLost = (responseObject) => {
-          console.warn('MQTT 連線中斷:', responseObject.errorMessage);
-          updateNetworkBadge(false, '連線重試中...');
+          isConnectingMqtt = false;
+          console.warn('MQTT SSL 安全連線中斷:', responseObject.errorMessage);
+          updateNetworkBadge(false, '安全通道重連中...');
           setTimeout(() => {
             if (activeSubscribedTopic) initMqttConnection(activeSubscribedTopic);
-          }, 2500);
+          }, 2000);
         };
 
         mqttClient.onMessageArrived = (message) => {
@@ -1291,53 +1342,88 @@
           }
         };
 
-        updateNetworkBadge(false, '正在連線信號伺服器 (broker.hivemq.com)...');
+        updateNetworkBadge(false, '正在連線加密安全通道 (broker.hivemq.com:8884)...');
 
+        // 核心要求：在任何環境下皆 100% 啟用 useSSL: true
         mqttClient.connect({
           useSSL: true,
-          timeout: 4,
+          timeout: 5,
           keepAliveInterval: 30,
           cleanSession: true,
           onSuccess: () => {
-            activeSubscribedTopic = targetTopic;
-            mqttClient.subscribe(targetTopic, { qos: 0 });
-            console.log(`[MQTT] 已連線並訂閱房號主題: ${targetTopic}`);
-            updateNetworkBadge(true, '公開訊號已連線 (broker.hivemq.com:8884)');
+            isConnectingMqtt = false;
+            const subTopic = pendingMqttTopic || targetTopic;
+            pendingMqttTopic = null;
+            activeSubscribedTopic = subTopic;
+            mqttClient.subscribe(subTopic, { qos: 0 });
+            console.log(`[MQTT WSS:8884] 已成功建立加密連線並訂閱: ${subTopic}`);
+            updateNetworkBadge(true, '加密安全通道已連線 (broker.hivemq.com:8884)');
+            flushMqttOutbox();
             if (onReady) onReady();
           },
           onFailure: (err) => {
-            console.warn('HiveMQ 連線失敗，切換至備援 EMQX 節點:', err);
-            tryEmqxFallback(targetTopic, onReady);
+            isConnectingMqtt = false;
+            console.warn('HiveMQ 8884 連線受限，切換至備援 EMQX 8084 安全節點:', err);
+            tryEmqxFallback(pendingMqttTopic || targetTopic, onReady);
           }
         });
       } catch (err) {
+        isConnectingMqtt = false;
         console.error('初始化 MQTT 錯誤:', err);
-        if (onReady) onReady();
+        tryEmqxFallback(targetTopic, onReady);
       }
     }
 
     function tryEmqxFallback(targetTopic, onReady) {
+      targetTopic = getCleanRoomTopic(targetTopic);
+      isConnectingMqtt = true;
       try {
         const clientId = 'rummi_e_' + Math.random().toString(36).substring(2, 11);
+        // 核心要求：備援 EMQX 安全 WebSocket 節點 (broker.emqx.io:8084/mqtt) 啟用 100% SSL
         mqttClient = new Paho.MQTT.Client('broker.emqx.io', 8084, '/mqtt', clientId);
 
+        mqttClient.onConnectionLost = (responseObject) => {
+          isConnectingMqtt = false;
+          console.warn('EMQX 連線中斷:', responseObject.errorMessage);
+          updateNetworkBadge(false, '連線重試中...');
+          setTimeout(() => {
+            if (activeSubscribedTopic) initMqttConnection(activeSubscribedTopic);
+          }, 2500);
+        };
+
+        mqttClient.onMessageArrived = (message) => {
+          try {
+            const data = JSON.parse(message.payloadString);
+            if (data.senderId !== myPlayerId) {
+              handleInboundMessage(data);
+            }
+          } catch (err) {}
+        };
+
+        // 核心要求：在任何環境下皆 100% 啟用 useSSL: true
         mqttClient.connect({
           useSSL: true,
-          timeout: 4,
+          timeout: 5,
           cleanSession: true,
+          keepAliveInterval: 30,
           onSuccess: () => {
+            isConnectingMqtt = false;
             activeSubscribedTopic = targetTopic;
             mqttClient.subscribe(targetTopic, { qos: 0 });
-            updateNetworkBadge(true, '已連線 (broker.emqx.io:8084)');
+            console.log(`[EMQX WSS:8084] 備援安全通道已訂閱: ${targetTopic}`);
+            updateNetworkBadge(true, '備援安全通道已連線 (broker.emqx.io:8084)');
+            flushMqttOutbox();
             if (onReady) onReady();
           },
           onFailure: (e) => {
-            console.warn('備援節點無法連線，使用本地/分頁通道:', e);
+            isConnectingMqtt = false;
+            console.warn('EMQX 連線失敗，切換至本地/分頁通道:', e);
             updateNetworkBadge(true, '通道已就緒 (本地/分頁模式)');
             if (onReady) onReady();
           }
         });
       } catch (e) {
+        isConnectingMqtt = false;
         if (onReady) onReady();
       }
     }
@@ -1346,6 +1432,10 @@
       messageObj.senderId = myPlayerId;
       messageObj.timestamp = Date.now();
       messageObj.msgId = `${myPlayerId}_${++packetSeq}`;
+      if (myRoomId) {
+        messageObj.roomId = getPureRoomId(myRoomId);
+        messageObj.roomTopic = getCleanRoomTopic(myRoomId);
+      }
       const payload = JSON.stringify(messageObj);
 
       // 記錄自己發出的訊息 ID，避免同一裝置或分頁接收回音
@@ -1360,27 +1450,32 @@
         try { localBroadcastChannel.postMessage(messageObj); } catch (e) {}
       }
 
+      const targetTopic = myRoomId ? getCleanRoomTopic(myRoomId) : '';
+
       // 2. 本地/託管伺服器原生 WebSocket
-      if (localWs && localWs.readyState === WebSocket.OPEN && myRoomId) {
+      if (localWs && localWs.readyState === WebSocket.OPEN && targetTopic) {
         try {
           localWs.send(JSON.stringify({
             type: 'BROADCAST_ROOM',
-            roomId: getCleanRoomTopic(myRoomId),
+            roomId: targetTopic,
+            roomTopic: targetTopic,
             data: messageObj
           }));
         } catch (e) {}
       }
 
-      // 3. 公開 MQTT WebSocket
-      if (mqttClient && mqttClient.isConnected() && myRoomId) {
+      // 3. 公開 MQTT WebSocket (跨手機/跨電腦核心安全加密通道)
+      if (mqttClient && mqttClient.isConnected() && targetTopic) {
         try {
           const message = new Paho.MQTT.Message(payload);
-          message.destinationName = getCleanRoomTopic(myRoomId);
+          message.destinationName = targetTopic;
           message.qos = 0;
           mqttClient.send(message);
         } catch (e) {
           console.warn('MQTT 廣播發送失敗:', e);
         }
+      } else if (targetTopic) {
+        pendingMqttOutbox.push({ topic: targetTopic, payload });
       }
     }
 
@@ -1389,8 +1484,9 @@
     // ==========================================
     class AuthoritativeRoomHost {
       constructor(roomId, hostPlayer) {
-        this.roomId = roomId;
-        this.roomName = `自訂房間 ${roomId}`;
+        this.roomId = getPureRoomId(roomId);
+        this.roomTopic = getCleanRoomTopic(roomId);
+        this.roomName = `自訂房間 ${this.roomId}`;
         this.hostId = hostPlayer.id;
         this.createdAt = Date.now();
         this.players = [hostPlayer];
@@ -1733,6 +1829,7 @@
         const msg = {
           type: 'ROOM_UPDATE',
           roomId: this.roomId,
+          roomTopic: this.roomTopic,
           roomName: this.roomName,
           hostId: this.hostId,
           createdAt: this.createdAt,
@@ -1782,6 +1879,12 @@
     function handleInboundMessage(msg) {
       if (!msg || !msg.type) return;
       if (msg.senderId === myPlayerId) return;
+
+      // 房間主題過濾：確保訊息來自同一個自訂房間 (避免多房間串訊)
+      if (myRoomId) {
+        const incomingRoom = msg.roomTopic || msg.roomId;
+        if (incomingRoom && !isSameRoom(incomingRoom, myRoomId)) return;
+      }
 
       // 封包去重：防止同一訊息從多條通道 (WS / MQTT / BroadcastChannel) 同時到達重複觸發
       if (msg.msgId) {
@@ -1981,12 +2084,13 @@
     // ==========================================
     function clientEnterRoom() {
       const rawCode = document.getElementById('input-room').value.trim();
-      const codeInput = rawCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const codeInput = getPureRoomId(rawCode);
       if (!codeInput) {
         showToast('請輸入英文字母或數字自訂房號（例如：ROOM88、123）！');
         return;
       }
       document.getElementById('input-room').value = codeInput;
+      myRoomId = codeInput;
       myPlayerName = document.getElementById('input-name').value.trim() || '玩家';
       localStorage.setItem('rummi_user_name', myPlayerName);
 
@@ -2013,30 +2117,36 @@
           broadcastToRoom({
             type: 'ROOM_PING',
             senderId: myPlayerId,
-            senderName: myPlayerName
+            senderName: myPlayerName,
+            roomId: codeInput,
+            roomTopic: getCleanRoomTopic(codeInput)
           });
           broadcastToRoom({
             type: 'PLAYER_JOIN',
+            roomId: codeInput,
+            roomTopic: getCleanRoomTopic(codeInput),
             player: { id: myPlayerId, name: myPlayerName }
           });
         };
         sendJoinPing();
 
-        // 探測與握手機制：每 400ms 送一次探測與加入請求
+        // 探測與握手機制：每 350ms 送一次探測與加入請求
         joinRetryInterval = setInterval(() => {
           attempts++;
 
           // 1. 若已經收到房主回覆且自己已出現在房間玩家名單中，握手成功完成
-          if (roomState && roomState.roomId === codeInput && roomState.players && roomState.players.some(p => p.id === myPlayerId)) {
+          if (roomState && isSameRoom(roomState.roomId, codeInput) && roomState.players && roomState.players.some(p => p.id === myPlayerId)) {
             clearInterval(joinRetryInterval);
             joinRetryInterval = null;
             return;
           }
 
           // 2. 若收到房間狀態廣播、已知房內已有其他房主，持續發送加入請求，絕不自行升格為第二房主
-          if (roomState && roomState.roomId === codeInput && roomState.players && roomState.players.some(p => p.isHost && p.id !== myPlayerId)) {
+          if (roomState && isSameRoom(roomState.roomId, codeInput) && roomState.players && roomState.players.some(p => p.isHost && p.id !== myPlayerId)) {
             broadcastToRoom({
               type: 'PLAYER_JOIN',
+              roomId: codeInput,
+              roomTopic: getCleanRoomTopic(codeInput),
               player: { id: myPlayerId, name: myPlayerName }
             });
             if (attempts >= 12) {
@@ -2046,8 +2156,8 @@
             return;
           }
 
-          // 3. 經過 6 次探測 (2.4 秒) 房內確實完全無其他房主回應，自身升格為第一位房主
-          if (attempts >= 6) {
+          // 3. 經過 7 次探測 (約 2.5 秒) 房內確實完全無其他房主回應，自身升格為第一位房主
+          if (attempts >= 7) {
             clearInterval(joinRetryInterval);
             joinRetryInterval = null;
             if (!roomState || !roomState.players || !roomState.players.some(p => p.isHost && p.id !== myPlayerId)) {
