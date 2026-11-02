@@ -1086,7 +1086,7 @@
   <!-- ========================================================================= -->
   <script>
     // 每一個瀏覽器分頁 / 視窗在啟動時自動生成唯一執行時期 ID，徹底杜絕多開分頁因共用 Session ID 導致訊息被忽略的問題
-    const myPlayerId = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
+    const myPlayerId = 'p_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000000).toString(36);
     let myPlayerName = localStorage.getItem('rummi_user_name') || `玩家${Math.floor(100 + Math.random() * 900)}`;
     document.getElementById('input-name').value = myPlayerName;
 
@@ -1192,6 +1192,32 @@
       document.getElementById('sound-icon').innerText = isMuted ? '🔇' : '🔊';
       showToast(isMuted ? '已靜音' : '音效已開啟');
     }
+
+    // 音效合成呼叫捷徑
+    const sound = {
+      turnStart() {
+        playTone(523.25, 'sine', 0.1, 0.1);
+        setTimeout(() => playTone(659.25, 'sine', 0.2, 0.1), 100);
+      },
+      tileClick() {
+        playTone(600, 'sine', 0.05, 0.06);
+      },
+      tilePlace() {
+        playTone(480, 'triangle', 0.08, 0.08);
+      },
+      validMove() {
+        playTone(880, 'sine', 0.12, 0.08);
+      },
+      error() {
+        playTone(180, 'sawtooth', 0.25, 0.12);
+      },
+      win() {
+        playVictoryFanfare();
+      },
+      countdownTick(sec) {
+        playEmergencyTick(sec);
+      }
+    };
 
     // 煙火彩帶粒子系統
     let confettiParticles = [];
@@ -2238,16 +2264,22 @@
 
       // 若我是房主，處理來自客戶端的操作
       if (isHost && authoritativeEngine) {
-        if (msg.type === 'PLAYER_JOIN') {
-          authoritativeEngine.addPlayer({
-            id: msg.player.id,
-            name: msg.player.name,
-            isHost: false,
-            connected: true,
-            hand: [],
-            initialMeldDone: false,
-            totalTimeUsedSeconds: 0
-          });
+        if (msg.type === 'PLAYER_JOIN' || msg.type === 'ENTER_ROOM') {
+          const joinP = msg.player || {
+            id: msg.playerId || msg.senderId,
+            name: msg.playerName || msg.senderName || '玩家'
+          };
+          if (joinP && joinP.id) {
+            authoritativeEngine.addPlayer({
+              id: joinP.id,
+              name: joinP.name || '玩家',
+              isHost: false,
+              connected: true,
+              hand: [],
+              initialMeldDone: false,
+              totalTimeUsedSeconds: 0
+            });
+          }
           return;
         } else if (msg.type === 'ROOM_PING') {
           // 收到新玩家進房探測，立即以當前狀態回覆
@@ -2468,10 +2500,18 @@
             roomTopic: getCleanRoomTopic(codeInput),
             player: { id: myPlayerId, name: myPlayerName }
           });
+          broadcastToRoom({
+            type: 'ENTER_ROOM',
+            roomId: codeInput,
+            roomTopic: getCleanRoomTopic(codeInput),
+            player: { id: myPlayerId, name: myPlayerName },
+            playerId: myPlayerId,
+            playerName: myPlayerName
+          });
         };
         sendJoinPing();
 
-        // 探測與握手機制：每 350ms 送一次探測與加入請求
+        // 探測與握手機制：每 800ms 送一次探測與加入請求，給予 10 次 (8 秒) 高容錯探測時間
         joinRetryInterval = setInterval(() => {
           attempts++;
 
@@ -2484,21 +2524,16 @@
 
           // 2. 若收到房間狀態廣播、已知房內已有其他房主，持續發送加入請求，絕不自行升格為第二房主
           if (roomState && isSameRoom(roomState.roomId, codeInput) && roomState.players && roomState.players.some(p => p.isHost && p.id !== myPlayerId)) {
-            broadcastToRoom({
-              type: 'PLAYER_JOIN',
-              roomId: codeInput,
-              roomTopic: getCleanRoomTopic(codeInput),
-              player: { id: myPlayerId, name: myPlayerName }
-            });
-            if (attempts >= 12) {
+            sendJoinPing();
+            if (attempts >= 15) {
               clearInterval(joinRetryInterval);
               joinRetryInterval = null;
             }
             return;
           }
 
-          // 3. 經過 7 次探測 (約 2.5 秒) 房內確實完全無其他房主回應，自身升格為第一位房主
-          if (attempts >= 7) {
+          // 3. 經過 10 次探測 (約 8 秒) 房內確實完全無其他房主回應，自身升格為第一位房主
+          if (attempts >= 10) {
             clearInterval(joinRetryInterval);
             joinRetryInterval = null;
             if (!roomState || !roomState.players || !roomState.players.some(p => p.isHost && p.id !== myPlayerId)) {
@@ -2518,7 +2553,7 @@
           } else {
             sendJoinPing();
           }
-        }, 400);
+        }, 800);
       });
     }
 
