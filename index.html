@@ -1158,12 +1158,12 @@
     let packetSeq = 0;
     const seenMsgIds = new Set();
 
-    // 清理並標準化房號為合法的統一 MQTT 主題名稱 (強制加上 AIS_RUMMIKUB_V2/ 前綴)
+    // 清理並標準化房號為合法的統一 MQTT 主題名稱 (強制加上 ais_rummikub_v2/ 前綴)
     function getCleanRoomTopic(roomId) {
-      if (!roomId) return 'AIS_RUMMIKUB_V2/MAIN';
+      if (!roomId) return 'ais_rummikub_v2/MAIN';
       const raw = String(roomId).trim().toUpperCase();
       const clean = raw.replace(/^AIS_RUMMIKUB_V2\//i, '').replace(/[^A-Z0-9]/g, '') || 'MAIN';
-      return `AIS_RUMMIKUB_V2/${clean}`;
+      return `ais_rummikub_v2/${clean}`;
     }
 
     // 提取純淨房號 (移除任何前綴，例如 AIS_RUMMIKUB_V2/ROOM88 -> ROOM88)
@@ -3091,10 +3091,7 @@
     }
     requestAnimationFrame(animationLoop);
 
-    // 網頁載入時預先建立 MQTT 基礎連線，消除第一次點擊進房時的連線延遲
-    try {
-      initMqttConnection('AIS_RUMMIKUB_V2/LOBBY_PRELOAD');
-    } catch (e) {}
+
 
     redrawCanvas();
   </script>
