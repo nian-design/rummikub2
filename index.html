@@ -45,6 +45,14 @@
     }
   </script>
 
+  <!-- QRCode.js CDN (支援 Waiting Room 手機動態掃碼進房) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      document.write('<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
+
   <style>
     :root {
       --bg-dark: #090d16;
@@ -555,6 +563,40 @@
       color: #38bdf8;
     }
 
+    /* 內建動態 QR Code 掃碼進房樣式 (高對比/防眩光) */
+    .qrcode-wrapper {
+      background: #0b111e;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 16px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+      width: 100%;
+    }
+
+    .qrcode-box {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 154px;
+      min-height: 154px;
+    }
+
+    .qrcode-box canvas,
+    .qrcode-box img {
+      display: block;
+      margin: 0 auto;
+      border-radius: 4px;
+    }
+
     .player-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -886,6 +928,27 @@
           </div>
         </div>
 
+        <!-- 內建動態 QR Code 掃碼進房容器 (手機相機友善高對比二維碼) -->
+        <div class="qrcode-wrapper">
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 16px;">📱</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #38bdf8;">手機掃碼立即進房</div>
+                <div style="font-size: 11px; color: #94a3b8;">免手動輸入房號，相機一掃自動加入對局</div>
+              </div>
+            </div>
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px; min-height: 28px;" onclick="copyRoomShareLink()" title="複製邀請網址">
+              📋 複製房間連結
+            </button>
+          </div>
+          <div id="qrcode-container" class="qrcode-box"></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; width: 100%;">
+            <span style="font-size: 11px; color: #38bdf8; font-family: monospace; word-break: break-all; max-width: 95%; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);" id="qrcode-room-url"></span>
+            <span style="font-size: 11px; color: #f59e0b; font-weight: 600;">✨ 手機自動填入房號與隨機暱稱，100% 走安全加密雲端 MQTT 頻道合流！</span>
+          </div>
+        </div>
+
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <span style="font-size: 13px; font-weight: 800; color: #cbd5e1;">房間成員名單</span>
@@ -1124,11 +1187,28 @@
       localStorage.setItem('rummi_user_name', myPlayerName);
     });
 
-    // 檢查網址是否有自帶房號 (URL ?room=XXXXX)
+    // 檢查網址是否有自帶房號 (URL ?room=XXXXX) 並實現手機掃碼全自動進房
     const urlParams = new URLSearchParams(window.location.search);
     const roomParam = urlParams.get('room');
     if (roomParam) {
-      document.getElementById('input-room').value = roomParam.toUpperCase();
+      const pureRoom = getPureRoomId(roomParam);
+      document.getElementById('input-room').value = pureRoom;
+      if (!localStorage.getItem('rummi_user_name')) {
+        myPlayerName = `手機玩家${Math.floor(100 + Math.random() * 900)}`;
+        document.getElementById('input-name').value = myPlayerName;
+        localStorage.setItem('rummi_user_name', myPlayerName);
+      }
+      // 網頁載入後自動觸發進入房間，手機相機一掃秒速連線
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          clientEnterRoom();
+        }, 400);
+      });
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(() => {
+          clientEnterRoom();
+        }, 400);
+      }
     }
 
     // ==========================================
@@ -2557,6 +2637,58 @@
       });
     }
 
+    let currentRenderedQrRoom = null;
+    function renderWaitingRoomQRCode(roomId) {
+      if (!roomId) return;
+      const cleanId = getPureRoomId(roomId);
+      const container = document.getElementById('qrcode-container');
+      const urlEl = document.getElementById('qrcode-room-url');
+      if (!container) return;
+
+      const shareUrl = window.location.origin + window.location.pathname + '?room=' + encodeURIComponent(cleanId);
+      if (urlEl) {
+        urlEl.innerText = shareUrl;
+      }
+
+      if (currentRenderedQrRoom === cleanId && container.children.length > 0) {
+        return;
+      }
+      currentRenderedQrRoom = cleanId;
+
+      container.innerHTML = '';
+      if (typeof QRCode !== 'undefined') {
+        try {
+          new QRCode(container, {
+            text: shareUrl,
+            width: 148,
+            height: 148,
+            colorDark: "#090d16",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+          return;
+        } catch (e) {
+          console.warn('QRCode 繪製異常:', e);
+        }
+      }
+
+      // 備援定時檢查 QRCode CDN 載入
+      setTimeout(() => {
+        if (typeof QRCode !== 'undefined' && container && container.children.length === 0) {
+          try {
+            new QRCode(container, {
+              text: shareUrl,
+              width: 148,
+              height: 148,
+              colorDark: "#090d16",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.M
+            });
+          } catch (err) {}
+        }
+      }, 500);
+    }
+
     function showGameUI(roomId) {
       document.getElementById('lobby-section').style.display = 'none';
       document.getElementById('header-btn-leave').style.display = 'inline-flex';
@@ -2564,6 +2696,9 @@
       document.getElementById('display-room-code').innerText = roomId;
       const waitingCodeEl = document.getElementById('waiting-display-room-code');
       if (waitingCodeEl) waitingCodeEl.innerText = roomId;
+
+      // 即時繪製當前房間之動態 QR Code 二維碼
+      renderWaitingRoomQRCode(roomId);
 
       // 如果尚未開局，展示純淨等待大廳，100% 隱蔽棋盤與手牌架！
       if (!roomState || roomState.status === 'waiting') {
@@ -2626,6 +2761,10 @@
       document.getElementById('header-btn-leave').style.display = 'none';
       document.getElementById('room-code-tag').style.display = 'none';
 
+      currentRenderedQrRoom = null;
+      const qrBox = document.getElementById('qrcode-container');
+      if (qrBox) qrBox.innerHTML = '';
+
       clientHand = [];
       clientBoard = [];
       selectedHandCardIds.clear();
@@ -2641,13 +2780,16 @@
 
     function copyRoomShareLink() {
       if (!myRoomId) return;
-      const url = new URL(window.location.href);
-      url.searchParams.set('room', myRoomId);
-      navigator.clipboard.writeText(url.toString()).then(() => {
-        showToast('已複製房間邀請連結！好友點開即自動進入同房號！');
-      }).catch(() => {
+      const shareUrl = window.location.origin + window.location.pathname + '?room=' + encodeURIComponent(myRoomId);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast('📋 已複製房間邀請連結！好友點開即自動進入同房號！');
+        }).catch(() => {
+          showToast(`房號連結：${shareUrl}`);
+        });
+      } else {
         showToast(`房號：${myRoomId}`);
-      });
+      }
     }
 
     // ==========================================
@@ -2766,6 +2908,7 @@
         if (isWaiting) {
           if (waitingSection) waitingSection.style.display = 'flex';
           if (gameSection) gameSection.style.display = 'none';
+          renderWaitingRoomQRCode(myRoomId);
 
           const players = roomState?.players || [{
             id: myPlayerId,
