@@ -40,16 +40,11 @@
   <!-- 免費公開 Paho MQTT JavaScript 客戶端 CDN (支援 GitHub Pages 跨外網無後端即時廣播) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
   <script>
-  
-  </script>
-
-  <!-- QRCode.js CDN (支援 Waiting Room 手機動態掃碼進房) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script>
-    if (typeof QRCode === 'undefined') {
-      document.write('<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"><\/script>');
+    if (typeof Paho === 'undefined') {
+      document.write('<script src="https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt-min.js"><\/script>');
     }
   </script>
+
 
   <style>
     :root {
@@ -561,40 +556,6 @@
       color: #38bdf8;
     }
 
-    /* 內建動態 QR Code 掃碼進房樣式 (高對比/防眩光) */
-    .qrcode-wrapper {
-      background: #0b111e;
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      border-radius: 16px;
-      padding: 16px 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
-      width: 100%;
-    }
-
-    .qrcode-box {
-      background: #ffffff;
-      padding: 12px;
-      border-radius: 14px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 154px;
-      min-height: 154px;
-    }
-
-    .qrcode-box canvas,
-    .qrcode-box img {
-      display: block;
-      margin: 0 auto;
-      border-radius: 4px;
-    }
-
     .player-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -926,27 +887,6 @@
           </div>
         </div>
 
-        <!-- 內建動態 QR Code 掃碼進房容器 (手機相機友善高對比二維碼) -->
-        <div class="qrcode-wrapper">
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="font-size: 16px;">📱</span>
-              <div>
-                <div style="font-size: 13px; font-weight: 800; color: #38bdf8;">手機掃碼立即進房</div>
-                <div style="font-size: 11px; color: #94a3b8;">免手動輸入房號，相機一掃自動加入對局</div>
-              </div>
-            </div>
-            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px; min-height: 28px;" onclick="copyRoomShareLink()" title="複製邀請網址">
-              📋 複製房間連結
-            </button>
-          </div>
-          <div id="qrcode-container" class="qrcode-box"></div>
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; width: 100%;">
-            <span style="font-size: 11px; color: #38bdf8; font-family: monospace; word-break: break-all; max-width: 95%; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);" id="qrcode-room-url"></span>
-            <span style="font-size: 11px; color: #f59e0b; font-weight: 600;">✨ 手機自動填入房號與隨機暱稱，100% 走安全加密雲端 MQTT 頻道合流！</span>
-          </div>
-        </div>
-
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <span style="font-size: 13px; font-weight: 800; color: #cbd5e1;">房間成員名單</span>
@@ -1022,6 +962,13 @@
 
           <button class="btn-secondary" id="btn-clear-selection" onclick="clearAllSelections()" style="display: none;">
             ✕ 取消選取
+          </button>
+
+          <button class="btn-secondary" onclick="clientSort777()" title="手牌依同數字排列 (Joker 置最右側)">
+            🎴 777 同數
+          </button>
+          <button class="btn-secondary" onclick="clientSort789()" title="手牌依同色順組排列 (Joker 置最右側)">
+            🎴 789 順牌
           </button>
 
           <button class="btn-secondary" onclick="clientResetTurn()" id="btn-reset" title="復原手牌至本回合剛開始">
@@ -2587,104 +2534,75 @@
             playerName: myPlayerName
           });
         };
+        // 立即發送探測與加入封包 (0ms 與 200ms 雙發高可靠防丟包)
         sendJoinPing();
+        const secondPingTimer = setTimeout(sendJoinPing, 200);
 
-        // 探測與握手機制：每 800ms 送一次探測與加入請求，給予 10 次 (8 秒) 高容錯探測時間
-        joinRetryInterval = setInterval(() => {
-          attempts++;
+        // 450ms 極速無人響應仲裁：若無現有房主響應，本地升格為權威房主
+        joinRetryInterval = setTimeout(() => {
+          joinRetryInterval = null;
+          clearTimeout(secondPingTimer);
 
-          // 1. 若已經收到房主回覆且自己已出現在房間玩家名單中，握手成功完成
-          if (roomState && isSameRoom(roomState.roomId, codeInput) && roomState.players && roomState.players.some(p => p.id === myPlayerId)) {
-            clearInterval(joinRetryInterval);
-            joinRetryInterval = null;
-            return;
-          }
+          const hasRemoteHost = roomState && isSameRoom(roomState.roomId, codeInput) &&
+            roomState.players && roomState.players.some(p => p.isHost && p.id !== myPlayerId);
 
-          // 2. 若收到房間狀態廣播、已知房內已有其他房主，持續發送加入請求，絕不自行升格為第二房主
-          if (roomState && isSameRoom(roomState.roomId, codeInput) && roomState.players && roomState.players.some(p => p.isHost && p.id !== myPlayerId)) {
-            sendJoinPing();
-            if (attempts >= 15) {
-              clearInterval(joinRetryInterval);
-              joinRetryInterval = null;
-            }
-            return;
-          }
-
-          // 3. 經過 10 次探測 (約 8 秒) 房內確實完全無其他房主回應，自身升格為第一位房主
-          if (attempts >= 10) {
-            clearInterval(joinRetryInterval);
-            joinRetryInterval = null;
-            if (!roomState || !roomState.players || !roomState.players.some(p => p.isHost && p.id !== myPlayerId)) {
-              isHost = true;
-              authoritativeEngine = new AuthoritativeRoomHost(codeInput, {
-                id: myPlayerId,
-                name: myPlayerName,
-                isHost: true,
-                connected: true,
-                hand: [],
-                initialMeldDone: false,
-                totalTimeUsedSeconds: 0
-              });
-              authoritativeEngine.broadcastState();
-              updateUIControls();
-            }
+          if (!hasRemoteHost) {
+            isHost = true;
+            authoritativeEngine = new AuthoritativeRoomHost(codeInput, {
+              id: myPlayerId,
+              name: myPlayerName,
+              isHost: true,
+              connected: true,
+              hand: [],
+              initialMeldDone: false,
+              totalTimeUsedSeconds: 0
+            });
+            authoritativeEngine.broadcastState();
+            updateUIControls();
           } else {
             sendJoinPing();
           }
-        }, 800);
+        }, 450);
       });
     }
 
-    let currentRenderedQrRoom = null;
-    function renderWaitingRoomQRCode(roomId) {
-      if (!roomId) return;
-      const cleanId = getPureRoomId(roomId);
-      const container = document.getElementById('qrcode-container');
-      const urlEl = document.getElementById('qrcode-room-url');
-      if (!container) return;
+    // 手牌排序演算法：百搭牌 (Joker) 嚴格置於最右側
+    function sortHandByValue(cards) {
+      const colorOrder = { black: 1, blue: 2, red: 3, yellow: 4 };
+      return [...cards].sort((a, b) => {
+        if (a.isJoker && b.isJoker) return 0;
+        if (a.isJoker) return 1;
+        if (b.isJoker) return -1;
+        if (a.value !== b.value) return (a.value || 0) - (b.value || 0);
+        const cA = a.color ? (colorOrder[a.color] || 9) : 9;
+        const cB = b.color ? (colorOrder[b.color] || 9) : 9;
+        return cA - cB;
+      });
+    }
 
-      const shareUrl = window.location.origin + window.location.pathname + '?room=' + encodeURIComponent(cleanId);
-      if (urlEl) {
-        urlEl.innerText = shareUrl;
-      }
+    function sortHandByRun(cards) {
+      const colorOrder = { black: 1, blue: 2, red: 3, yellow: 4 };
+      return [...cards].sort((a, b) => {
+        if (a.isJoker && b.isJoker) return 0;
+        if (a.isJoker) return 1;
+        if (b.isJoker) return -1;
+        const cA = a.color ? (colorOrder[a.color] || 9) : 9;
+        const cB = b.color ? (colorOrder[b.color] || 9) : 9;
+        if (cA !== cB) return cA - cB;
+        return (a.value || 0) - (b.value || 0);
+      });
+    }
 
-      if (currentRenderedQrRoom === cleanId && container.children.length > 0) {
-        return;
-      }
-      currentRenderedQrRoom = cleanId;
+    function clientSort777() {
+      clientHand = sortHandByValue(clientHand);
+      redrawCanvas();
+      showToast('🎴 已依同數字 (777) 排序，Joker 置於最右側');
+    }
 
-      container.innerHTML = '';
-      if (typeof QRCode !== 'undefined') {
-        try {
-          new QRCode(container, {
-            text: shareUrl,
-            width: 148,
-            height: 148,
-            colorDark: "#090d16",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.M
-          });
-          return;
-        } catch (e) {
-          console.warn('QRCode 繪製異常:', e);
-        }
-      }
-
-      // 備援定時檢查 QRCode CDN 載入
-      setTimeout(() => {
-        if (typeof QRCode !== 'undefined' && container && container.children.length === 0) {
-          try {
-            new QRCode(container, {
-              text: shareUrl,
-              width: 148,
-              height: 148,
-              colorDark: "#090d16",
-              colorLight: "#ffffff",
-              correctLevel: QRCode.CorrectLevel.M
-            });
-          } catch (err) {}
-        }
-      }, 500);
+    function clientSort789() {
+      clientHand = sortHandByRun(clientHand);
+      redrawCanvas();
+      showToast('🎴 已依同色順組 (789) 排序，Joker 置於最右側');
     }
 
     function showGameUI(roomId) {
@@ -2694,9 +2612,6 @@
       document.getElementById('display-room-code').innerText = roomId;
       const waitingCodeEl = document.getElementById('waiting-display-room-code');
       if (waitingCodeEl) waitingCodeEl.innerText = roomId;
-
-      // 即時繪製當前房間之動態 QR Code 二維碼
-      renderWaitingRoomQRCode(roomId);
 
       // 如果尚未開局，展示純淨等待大廳，100% 隱蔽棋盤與手牌架！
       if (!roomState || roomState.status === 'waiting') {
@@ -2758,10 +2673,6 @@
       document.getElementById('lobby-section').style.display = 'flex';
       document.getElementById('header-btn-leave').style.display = 'none';
       document.getElementById('room-code-tag').style.display = 'none';
-
-      currentRenderedQrRoom = null;
-      const qrBox = document.getElementById('qrcode-container');
-      if (qrBox) qrBox.innerHTML = '';
 
       clientHand = [];
       clientBoard = [];
@@ -2906,7 +2817,6 @@
         if (isWaiting) {
           if (waitingSection) waitingSection.style.display = 'flex';
           if (gameSection) gameSection.style.display = 'none';
-          renderWaitingRoomQRCode(myRoomId);
 
           const players = roomState?.players || [{
             id: myPlayerId,
@@ -3504,17 +3414,22 @@
 
       if (dragItem.isDragging) {
         hoveredDropTarget = null;
+        const pad = 10;
         for (const g of renderedBoardGroups) {
-          if (pos.x >= g.x && pos.x <= g.x + g.w && pos.y >= g.y && pos.y <= g.y + g.h) {
+          if (pos.x >= g.x - pad && pos.x <= g.x + g.w + pad && pos.y >= g.y - pad && pos.y <= g.y + g.h + pad) {
             hoveredDropTarget = { type: 'GROUP', index: g.index };
             break;
           }
         }
         if (!hoveredDropTarget && newGroupSlotBounds) {
           const s = newGroupSlotBounds;
-          if (pos.x >= s.x && pos.x <= s.x + s.w && pos.y >= s.y && pos.y <= s.y + s.h) {
+          if (pos.x >= s.x - pad && pos.x <= s.x + s.w + pad && pos.y >= s.y - pad && pos.y <= s.y + s.h + pad) {
             hoveredDropTarget = { type: 'NEW_SLOT' };
           }
+        }
+        // 若拖曳在整個公桌綠色絨布有效區域內 (y 介於 44 ~ 375 之間)，即使未精確對準插槽也視為欲成立新組
+        if (!hoveredDropTarget && pos.y >= 44 && pos.y <= 375 && pos.x >= 8 && pos.x <= canvas.width - 8) {
+          hoveredDropTarget = { type: 'NEW_SLOT' };
         }
         redrawCanvas();
       }
@@ -3530,15 +3445,21 @@
       } catch (err) {}
 
       if (dragItem.isDragging) {
+        const pos = getCanvasCoordinates(e);
+        let dropTarget = hoveredDropTarget;
+        if (!dropTarget && pos.y >= 44 && pos.y <= 375 && pos.x >= 8 && pos.x <= canvas.width - 8) {
+          dropTarget = { type: 'NEW_SLOT' };
+        }
+
         if (dragItem.type === 'HAND_TILES') {
-          if (hoveredDropTarget) {
-            const targetSetIdx = hoveredDropTarget.type === 'GROUP' ? hoveredDropTarget.index : -1;
+          if (dropTarget) {
+            const targetSetIdx = dropTarget.type === 'GROUP' ? dropTarget.index : -1;
             selectedHandCardIds.add(dragItem.cardId);
             clientPlaySelectedCards(targetSetIdx);
           }
         } else if (dragItem.type === 'BOARD_TILE') {
-          if (hoveredDropTarget) {
-            const toIdx = hoveredDropTarget.type === 'GROUP' ? hoveredDropTarget.index : -1;
+          if (dropTarget) {
+            const toIdx = dropTarget.type === 'GROUP' ? dropTarget.index : -1;
             if (toIdx !== dragItem.fromGroupIndex) {
               clientMoveBoardCards([dragItem.cardId], dragItem.fromGroupIndex, toIdx);
             }
