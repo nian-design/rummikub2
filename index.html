@@ -1495,23 +1495,33 @@
       return 0;
     }
 
-    function calculatePlayedTilesInitialMeld(board, playedTileIds) {
+    function calculatePlayedTilesInitialMeld(board, playedTileIds, initialHandCount, currentHandCount) {
       const playedSet = new Set(playedTileIds || []);
-      if (playedSet.size === 0) return { success: false, points: 0, reason: '未從手牌打出任何牌組！' };
-      const groupsWithPlayed = [];
+      const tilesPlayedCount =
+        initialHandCount !== undefined && currentHandCount !== undefined
+          ? initialHandCount - currentHandCount
+          : playedSet.size;
+
+      if (playedSet.size === 0 && tilesPlayedCount <= 0) {
+        return { success: false, points: 0, reason: '未從手牌打出任何牌組！' };
+      }
+
+      // 篩選出包含本回合新出手牌的牌組，或所有因新牌而成立/救活的合法牌組
+      const qualifyingGroups = [];
       for (const group of board) {
-        const hasPlayed = group.some(t => playedSet.has(t.id));
-        if (hasPlayed) {
-          const allFromPlayed = group.every(t => playedSet.has(t.id));
-          if (!allFromPlayed) {
-            return { success: false, points: 0, reason: '尚未破冰！禁止挪用公共桌面牌組，必須純從手牌成立全新牌組！' };
-          }
-          groupsWithPlayed.push(group);
+        if (!group || group.length === 0) continue;
+        const containsPlayed = playedSet.size > 0 ? group.some(t => playedSet.has(t.id)) : true;
+        if (containsPlayed) {
+          qualifyingGroups.push(group);
         }
       }
 
+      if (qualifyingGroups.length === 0) {
+        return { success: false, points: 0, reason: '未在桌面上找到由手牌打出或重組的有效牌組！' };
+      }
+
       let totalPoints = 0;
-      for (const grp of groupsWithPlayed) {
+      for (const grp of qualifyingGroups) {
         if (!isValidSet(grp) && !isValidRun(grp)) {
           return { success: false, points: 0, reason: '破冰牌組不合法（需為同數不同色或同色順組）！' };
         }
@@ -1519,9 +1529,9 @@
       }
 
       if (totalPoints < 30) {
-        return { success: false, points: totalPoints, reason: `首次出牌（破冰）總點數必須 ≥ 30 點！本次牌組僅 ${totalPoints} 點。` };
+        return { success: false, points: totalPoints, reason: `首次出牌（破冰）總點數必須 ≥ 30 點！本次新打出/救活牌組點數僅為 ${totalPoints} 點。` };
       }
-      return { success: true, points: totalPoints };
+      return { success: true, points: totalPoints, newGroups: qualifyingGroups };
     }
 
     // ==========================================
@@ -1535,19 +1545,15 @@
     let packetSeq = 0;
     const seenMsgIds = new Set();
 
-    // 清理並標準化房號為合法的統一 MQTT 主題名稱 (強制加上 ais_rummikub_v2/ 前綴)
-    function getCleanRoomTopic(roomId) {
-      if (!roomId) return 'ais_rummikub_v2/MAIN';
-      const raw = String(roomId).trim().toUpperCase();
-      const clean = raw.replace(/^AIS_RUMMIKUB_V2\//i, '').replace(/[^A-Z0-9]/g, '') || 'MAIN';
-      return `ais_rummikub_v2/${clean}`;
-    }
-
-    // 提取純淨房號 (移除任何前綴，例如 AIS_RUMMIKUB_V2/ROOM88 -> ROOM88)
+    // 統一房號與主題名稱：使用純粹無前綴之大寫英數房號 (例如 GAME6)
     function getPureRoomId(roomId) {
       if (!roomId) return 'MAIN';
       const raw = String(roomId).trim().toUpperCase();
-      return raw.replace(/^AIS_RUMMIKUB_V2\//i, '').replace(/[^A-Z0-9]/g, '') || 'MAIN';
+      return raw.replace(/^AIS_RUMMIKUB_V2\//i, '').replace(/[^A-Z0-9_-]/g, '') || 'MAIN';
+    }
+
+    function getCleanRoomTopic(roomId) {
+      return getPureRoomId(roomId);
     }
 
     // 嚴格比對是否為同一房間 (無視大小寫與前綴差異)
@@ -2130,13 +2136,13 @@
           const playedIds = this.playedCardsThisTurn || [];
           const actuallyPlayedFromHand = this.hasPlayedFromHand || playedCount > 0 || playedIds.length > 0;
 
-          // A. 尚未破冰：檢查是否打出全新 ≥ 30 點牌組
+          // A. 尚未破冰：檢查是否打出全新/救活牌組且總點數 ≥ 30 點
           if (!player.initialMeldDone) {
-            if (!actuallyPlayedFromHand || playedIds.length === 0) {
-              broadcastToRoom({ type: 'ACTION_REJECTED', targetPlayerId: senderId, message: '未達 30 點破冰分數，請按復原並抽牌結束回合！' });
+            if (!actuallyPlayedFromHand || (playedCount <= 0 && playedIds.length === 0)) {
+              broadcastToRoom({ type: 'ACTION_REJECTED', targetPlayerId: senderId, message: '尚未破冰！首次出牌必須 ≥ 30 點；若點數不足請按「抽牌並 Pass」。' });
               return;
             }
-            const meldRes = calculatePlayedTilesInitialMeld(this.board, playedIds);
+            const meldRes = calculatePlayedTilesInitialMeld(this.board, playedIds, initialHandCount, player.hand.length);
             if (!meldRes.success || meldRes.points < 30) {
               broadcastToRoom({ type: 'ACTION_REJECTED', targetPlayerId: senderId, message: meldRes.reason || '首次出牌需 ≥ 30 點！' });
               return;
