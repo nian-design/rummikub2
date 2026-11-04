@@ -1081,9 +1081,9 @@
         <div style="width: 100%; background: #1e293b; border-radius: 999px; height: 8px; overflow: hidden; margin-top: 2px; border: 1px solid rgba(255,255,255,0.1);">
           <div id="victory-progress" style="width: 100%; height: 100%; background: linear-gradient(90deg, #f59e0b, #10b981); transition: width 0.5s ease;"></div>
         </div>
-        <p id="victory-countdown-txt" style="font-size: 12px; color: #94a3b8; font-family: monospace;">將在 15 秒後自動返回大廳...</p>
-        <button class="btn-primary" onclick="clientReturnToLobbyNow()" style="margin-top: 4px; padding: 10px 24px; font-size: 14px; font-weight: 800; border-radius: 10px;">
-          🚀 立即返回大廳
+        <p id="victory-countdown-txt" style="font-size: 12px; color: #94a3b8; font-family: monospace;">將在 15 秒後自動回到房間等待開局...</p>
+        <button class="btn-primary" onclick="clientReturnToLobbyNow()" style="margin-top: 4px; padding: 10px 24px; font-size: 14px; font-weight: 800; border-radius: 10px; background: linear-gradient(135deg, #10b981, #0284c7); color: white; cursor: pointer;">
+          🚀 回到房間等待開局
         </button>
       </div>
     </div>
@@ -2010,6 +2010,20 @@
           message: `抽籤結果：由 [${this.players[0].name}] 開始首出！(${this.isExtendedDeck ? '六人版160牌池' : '標準106牌池'})`
         });
 
+        // 房主本地亦立即展示 3D 抽牌翻牌順序全房動畫
+        trigger3DLotteryAnimation(this.turnOrder, this.players[0].name, lotteryCards);
+        const banner = document.getElementById('lottery-banner');
+        const titleEl = document.getElementById('lottery-title');
+        const orderEl = document.getElementById('lottery-order');
+        if (banner && titleEl && orderEl) {
+          titleEl.innerText = `抽籤結果：由 [${this.players[0].name}] 開始出牌！`;
+          if (Array.isArray(this.turnOrder)) {
+            orderEl.innerText = `順位：` + this.turnOrder.map(o => `第${o.order}棒 [${o.name}]`).join(' ➔ ');
+          }
+          banner.style.display = 'block';
+          setTimeout(() => banner.style.display = 'none', 7000);
+        }
+
         this.nextTurn();
       }
 
@@ -2204,7 +2218,7 @@
           totalTimeSeconds: p.totalTimeUsedSeconds || 0,
           cardCount: p.hand.length,
           isWinner: p.id === winnerPlayer.id
-        })).sort((a, b) => b.totalTimeSeconds - a.totalTimeSeconds);
+        })).sort((a, b) => a.cardCount - b.cardCount);
 
         broadcastToRoom({
           type: 'VICTORY_CELEBRATION',
@@ -2212,13 +2226,53 @@
           playerStats,
           autoRedirectSeconds: 15
         });
+
+        // 房主本地亦立即觸發獲勝慶祝與賽後總結畫面
+        triggerVictoryCelebration(this.winner, 15, playerStats);
         this.broadcastState();
 
-        // 15 秒後強制全房集體回歸大廳
-        setTimeout(() => {
-          broadcastToRoom({ type: 'RETURN_TO_LOBBY' });
-          handleReturnToLobby();
+        // 15 秒後全房回到房間等待開局
+        if (this.returnTimer) clearTimeout(this.returnTimer);
+        this.returnTimer = setTimeout(() => {
+          this.resetToWaitingRoom();
         }, 15000);
+      }
+
+      resetToWaitingRoom() {
+        if (this.returnTimer) {
+          clearTimeout(this.returnTimer);
+          this.returnTimer = null;
+        }
+        if (this.timer) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+        this.status = 'waiting';
+        this.board = [];
+        this.drawPile = [];
+        this.turnIdx = 0;
+        this.winner = null;
+        this.playedCardsThisTurn = [];
+        this.hasPlayedFromHand = false;
+        this.hasDrawnCard = false;
+        this.players.forEach(p => {
+          p.hand = [];
+          p.initialMeldDone = false;
+          p.totalTimeUsedSeconds = 0;
+        });
+
+        broadcastToRoom({ type: 'ROOM_RESET_WAITING', roomId: this.roomId });
+        this.broadcastState();
+
+        // 重啟大廳心跳
+        if (this.lobbyHeartbeat) clearInterval(this.lobbyHeartbeat);
+        this.lobbyHeartbeat = setInterval(() => {
+          if (this.status === 'waiting') {
+            this.broadcastState();
+          }
+        }, 1200);
+
+        handleReturnToWaitingRoom();
       }
 
       broadcastState() {
@@ -2275,7 +2329,14 @@
 
     function handleInboundMessage(msg) {
       if (!msg || !msg.type) return;
-      if (msg.senderId === myPlayerId) return;
+      const allowedSelfBroadcastTypes = [
+        'ROOM_UPDATE',
+        'TURN_ORDER_LOTTERY',
+        'VICTORY_CELEBRATION',
+        'RETURN_TO_LOBBY',
+        'ROOM_RESET_WAITING',
+      ];
+      if (msg.senderId === myPlayerId && !allowedSelfBroadcastTypes.includes(msg.type)) return;
 
       // 房間主題過濾：確保訊息來自同一個自訂房間 (避免多房間串訊)
       if (myRoomId) {
@@ -2404,8 +2465,10 @@
           alert('該房間已滿員（上限 6 人）！');
           handleReturnToLobby();
         }
-      } else if (msg.type === 'RETURN_TO_LOBBY') {
-        handleReturnToLobby();
+      } else if (msg.type === 'RETURN_TO_LOBBY' || msg.type === 'ROOM_RESET_WAITING') {
+        handleReturnToWaitingRoom();
+      } else if (msg.type === 'REQUEST_RESET_TO_WAITING' && isHost && authoritativeEngine) {
+        authoritativeEngine.resetToWaitingRoom();
       }
     }
 
@@ -2669,6 +2732,48 @@
       }
 
       handleReturnToLobby();
+    }
+
+    function handleReturnToWaitingRoom() {
+      closeModal('victory-modal');
+      if (victoryInterval) {
+        clearInterval(victoryInterval);
+        victoryInterval = null;
+      }
+      stopConfetti();
+
+      clientHand = [];
+      clientBoard = [];
+      selectedHandCardIds.clear();
+      selectedBoardCardIds.clear();
+      selectedBoardGroupIndex = -1;
+      dragItem = null;
+      hoveredDropTarget = null;
+
+      if (isHost && authoritativeEngine) {
+        if (authoritativeEngine.status !== 'waiting') {
+          authoritativeEngine.resetToWaitingRoom();
+          return;
+        }
+      } else if (!isHost && myRoomId) {
+        broadcastToRoom({ type: 'REQUEST_RESET_TO_WAITING', roomId: myRoomId });
+      }
+
+      if (roomState) {
+        roomState.status = 'waiting';
+        roomState.board = [];
+      }
+
+      const waitSec = document.getElementById('waiting-room-section');
+      const gameSec = document.getElementById('game-section');
+      const lobbySec = document.getElementById('lobby-section');
+      if (waitSec) waitSec.style.display = 'flex';
+      if (gameSec) gameSec.style.display = 'none';
+      if (lobbySec) lobbySec.style.display = 'none';
+
+      updateUIControls();
+      redrawCanvas();
+      showToast('🔄 已回到房間等待室，準備下一場開局！');
     }
 
     function handleReturnToLobby() {
@@ -3191,16 +3296,38 @@
         ctx.restore();
       }
 
-      // 渲染桌面牌組
+      // 渲染桌面牌組 (自適應牌組多寡動態調整欄位與卡牌尺寸)
       let curX = x + 12;
       let curY = y + 12;
-      const tileW = 38;
-      const tileH = 54;
-      const gapX = 3;
-      const groupGapX = 14;
-      const rowH = 68;
-
       const groups = clientBoard;
+      const totalTiles = groups.reduce((acc, g) => acc + (g ? g.length : 0), 0);
+      const groupCount = groups.length;
+
+      let tileW = 38;
+      let tileH = 54;
+      let gapX = 3;
+      let groupGapX = 14;
+      let rowH = 68;
+
+      if (groupCount <= 3 && totalTiles <= 12) {
+        tileW = 44;
+        tileH = 62;
+        gapX = 4;
+        groupGapX = 16;
+        rowH = 76;
+      } else if (groupCount >= 14 || totalTiles >= 48) {
+        tileW = 26;
+        tileH = 38;
+        gapX = 2;
+        groupGapX = 8;
+        rowH = 46;
+      } else if (groupCount >= 8 || totalTiles >= 26) {
+        tileW = 32;
+        tileH = 46;
+        gapX = 2.5;
+        groupGapX = 10;
+        rowH = 56;
+      }
       for (let gIdx = 0; gIdx < groups.length; gIdx++) {
         const group = groups[gIdx];
         if (!group || group.length === 0) continue;
@@ -3331,12 +3458,14 @@
 
       if (tile.isJoker) {
         ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 22px sans-serif';
+        const jokerSize = Math.max(14, Math.round(h * 0.42));
+        ctx.font = `bold ${jokerSize}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText('☺', x + w / 2, realY + h / 2 + 6);
-        ctx.font = 'bold 8px sans-serif';
+        ctx.fillText('☺', x + w / 2, realY + h / 2 + Math.round(h * 0.1));
+        const subSize = Math.max(7, Math.round(h * 0.15));
+        ctx.font = `bold ${subSize}px sans-serif`;
         ctx.fillStyle = '#0284c7';
-        ctx.fillText('JOKER', x + w / 2, realY + h - 5);
+        ctx.fillText('JOKER', x + w / 2, realY + h - Math.max(3, Math.round(h * 0.08)));
       } else {
         const colorMap = {
           black: '#1e293b',
@@ -3345,13 +3474,15 @@
           yellow: '#d97706'
         };
         ctx.fillStyle = colorMap[tile.color] || '#000000';
-        ctx.font = '900 20px sans-serif';
+        const fontSize = Math.max(13, Math.round(h * 0.38));
+        ctx.font = `900 ${fontSize}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(tile.value, x + w / 2, realY + h / 2 + 6);
+        ctx.fillText(tile.value, x + w / 2, realY + h / 2 + Math.round(h * 0.11));
 
         // 底部顏色圓點
         ctx.beginPath();
-        ctx.arc(x + w / 2, realY + h - 8, 3, 0, Math.PI * 2);
+        const dotR = Math.max(1.5, Math.round(h * 0.055));
+        ctx.arc(x + w / 2, realY + h - Math.max(4, Math.round(h * 0.14)), dotR, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -3607,17 +3738,17 @@
       if (victoryInterval) clearInterval(victoryInterval);
       victoryInterval = setInterval(() => {
         remaining--;
-        if (txt) txt.innerText = `將在 ${remaining} 秒後自動返回大廳...`;
+        if (txt) txt.innerText = `將在 ${remaining} 秒後自動回到房間等待開局...`;
         if (progress) progress.style.width = `${Math.max(0, (remaining / totalSeconds) * 100)}%`;
         if (remaining <= 0) {
           clearInterval(victoryInterval);
-          handleReturnToLobby();
+          handleReturnToWaitingRoom();
         }
       }, 1000);
     }
 
     function clientReturnToLobbyNow() {
-      handleReturnToLobby();
+      handleReturnToWaitingRoom();
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
