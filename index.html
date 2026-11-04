@@ -1615,40 +1615,57 @@
         console.warn('BroadcastChannel 不受支援:', e);
       }
 
-      // 2. 本地/託管伺服器原生 WebSocket (當處於開發預覽、本地伺服器或 Node 託管時，延遲為 0ms 且 100% 穩定)
-      if (window.location && window.location.host && !window.location.hostname.endsWith('github.io') && window.location.protocol.startsWith('http')) {
-        try {
-          if (localWs) {
-            try { localWs.close(); } catch (e) {}
-            localWs = null;
-          }
-          const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const wsUrl = `${proto}//${window.location.host}`;
-          localWs = new WebSocket(wsUrl);
+      // 2. 本地/託管伺服器原生 WebSocket (Cloud Run 443 埠加密通道，穿透各家電信 4G/5G 與企業防火牆)
+      const CLOUD_FALLBACK_HOST = 'ais-pre-srccdftsjvh2rd2s4p7lzu-649264171491.asia-southeast1.run.app';
+      const isLocalOrHosted = window.location && window.location.host &&
+        !window.location.hostname.endsWith('github.io') &&
+        window.location.protocol.startsWith('http');
 
-          localWs.onopen = () => {
-            localWs.send(JSON.stringify({ type: 'SUBSCRIBE_ROOM', roomId: targetTopic, roomTopic: targetTopic }));
-            updateNetworkBadge(true, `本地伺服器已連線 (${targetTopic})`);
-          };
+      const targetWsHost = isLocalOrHosted ? window.location.host : CLOUD_FALLBACK_HOST;
+      const targetWsProto = (window.location && window.location.protocol === 'http:') ? 'ws:' : 'wss:';
+      const wsUrl = `${targetWsProto}//${targetWsHost}/ws`;
 
-          localWs.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              if (data && data.senderId !== myPlayerId) {
-                handleInboundMessage(data);
-              }
-            } catch (err) {}
-          };
-
-          localWs.onerror = () => {
-            // 本地 WebSocket 若不可用，無縫降級由 MQTT 處理
-          };
-          localWs.onclose = () => {
-            // 斷線時持續依靠 MQTT
-          };
-        } catch (e) {
-          console.warn('本地 WebSocket 初始化失敗:', e);
+      try {
+        if (localWs) {
+          try { localWs.close(); } catch (e) {}
+          localWs = null;
         }
+        localWs = new WebSocket(wsUrl);
+
+        localWs.onopen = () => {
+          localWs.send(JSON.stringify({ type: 'SUBSCRIBE_ROOM', roomId: targetTopic, roomTopic: targetTopic, senderId: myPlayerId }));
+          updateNetworkBadge(true, `即時伺服器已連線 (${targetTopic})`);
+          if (window._wsPingTimer) clearInterval(window._wsPingTimer);
+          window._wsPingTimer = setInterval(() => {
+            if (localWs && localWs.readyState === WebSocket.OPEN) {
+              localWs.send(JSON.stringify({ type: 'ping', senderId: myPlayerId, timestamp: Date.now() }));
+            }
+          }, 15000);
+        };
+
+        localWs.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'pong') return;
+            if (data && data.senderId !== myPlayerId) {
+              handleInboundMessage(data);
+            }
+          } catch (err) {}
+        };
+
+        localWs.onerror = () => {
+          // 本地 WebSocket 若不可用，無縫降級由 MQTT 處理
+        };
+        localWs.onclose = () => {
+          if (window._wsPingTimer) clearInterval(window._wsPingTimer);
+          if (myRoomId) {
+            setTimeout(() => {
+              if (myRoomId) initNetworkForRoom(myRoomId);
+            }, 2500);
+          }
+        };
+      } catch (e) {
+        console.warn('本地 WebSocket 初始化失敗:', e);
       }
 
       // 3. 核心：初始化公開 MQTT Over WebSocket (保證跨手機/跨裝置 100% 互通)
@@ -1664,6 +1681,7 @@
 
     function initMqttConnection(targetTopic, onReady) {
       targetTopic = getCleanRoomTopic(targetTopic);
+      const mqttSubTopic = 'ais_rummi_v3_' + targetTopic;
       if (typeof Paho === 'undefined') {
         console.warn('Paho MQTT CDN 載入中，將使用可用連線通道');
         updateNetworkBadge(true, '已就緒 (本地通道)');
@@ -1673,12 +1691,12 @@
 
       // 若已有活躍連線，直接切換訂閱主題，無須銷毀連線重建
       if (mqttClient && mqttClient.isConnected()) {
-        if (activeSubscribedTopic && activeSubscribedTopic !== targetTopic) {
+        if (activeSubscribedTopic && activeSubscribedTopic !== mqttSubTopic) {
           try { mqttClient.unsubscribe(activeSubscribedTopic); } catch (e) {}
         }
-        activeSubscribedTopic = targetTopic;
-        mqttClient.subscribe(targetTopic, { qos: 0 });
-        console.log(`[MQTT WSS] 成功訂閱房號主題: ${targetTopic}`);
+        activeSubscribedTopic = mqttSubTopic;
+        mqttClient.subscribe(mqttSubTopic, { qos: 0 });
+        console.log(`[MQTT WSS] 成功訂閱房號主題: ${mqttSubTopic}`);
         updateNetworkBadge(true, `加密安全通道已訂閱 (${targetTopic})`);
         flushMqttOutbox();
         if (onReady) onReady();
@@ -1686,7 +1704,7 @@
       }
 
       if (isConnectingMqtt) {
-        pendingMqttTopic = targetTopic;
+        pendingMqttTopic = mqttSubTopic;
         if (onReady) {
           const checkReady = setInterval(() => {
             if (mqttClient && mqttClient.isConnected()) {
@@ -1735,7 +1753,7 @@
           cleanSession: true,
           onSuccess: () => {
             isConnectingMqtt = false;
-            const subTopic = pendingMqttTopic || targetTopic;
+            const subTopic = pendingMqttTopic || mqttSubTopic;
             pendingMqttTopic = null;
             activeSubscribedTopic = subTopic;
             mqttClient.subscribe(subTopic, { qos: 0 });
@@ -1747,13 +1765,13 @@
           onFailure: (err) => {
             isConnectingMqtt = false;
             console.warn('HiveMQ 8884 連線受限，切換至備援 EMQX 8084 安全節點:', err);
-            tryEmqxFallback(pendingMqttTopic || targetTopic, onReady);
+            tryEmqxFallback(pendingMqttTopic || mqttSubTopic, onReady);
           }
         });
       } catch (err) {
         isConnectingMqtt = false;
         console.error('初始化 MQTT 錯誤:', err);
-        tryEmqxFallback(targetTopic, onReady);
+        tryEmqxFallback(mqttSubTopic, onReady);
       }
     }
 
@@ -1848,17 +1866,18 @@
       }
 
       // 3. 公開 MQTT WebSocket (跨手機/跨電腦核心安全加密通道)
+      const mqttDestination = 'ais_rummi_v3_' + targetTopic;
       if (mqttClient && mqttClient.isConnected() && targetTopic) {
         try {
           const message = new Paho.MQTT.Message(payload);
-          message.destinationName = targetTopic;
+          message.destinationName = mqttDestination;
           message.qos = 0;
           mqttClient.send(message);
         } catch (e) {
           console.warn('MQTT 廣播發送失敗:', e);
         }
       } else if (targetTopic) {
-        pendingMqttOutbox.push({ topic: targetTopic, payload });
+        pendingMqttOutbox.push({ topic: mqttDestination, payload });
       }
     }
 
@@ -2578,6 +2597,22 @@
       showGameUI(codeInput);
       showToast(`正在進入自訂房間 [${codeInput}]...`, 1500);
 
+      // 0ms 雲端快照速查：先透過 REST 端點檢查此房是否已由其他裝置建立
+      fetch(`/api/room/${codeInput}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.exists && data.state) {
+            handleInboundMessage(data.state);
+            broadcastToRoom({
+              type: 'PLAYER_JOIN',
+              roomId: codeInput,
+              roomTopic: getCleanRoomTopic(codeInput),
+              player: { id: myPlayerId, name: myPlayerName }
+            });
+          }
+        })
+        .catch(() => {});
+
       initNetworkForRoom(codeInput, () => {
         let attempts = 0;
         const sendJoinPing = () => {
@@ -2611,7 +2646,7 @@
           setTimeout(sendJoinPing, 700)
         ];
 
-        // 950ms 跨裝置緩衝仲裁：若無現有房主響應，本地才升格為權威房主
+        // 900ms 跨裝置緩衝仲裁：若無現有房主響應，本地才升格為權威房主
         joinRetryInterval = setTimeout(() => {
           joinRetryInterval = null;
           pingTimers.forEach(t => clearTimeout(t));
@@ -2635,9 +2670,24 @@
           } else {
             sendJoinPing();
           }
-        }, 450);
+        }, 900);
       });
     }
+
+    // 行動裝置 (4G/5G) 螢幕解鎖或自背景切回喚醒監聽：立即檢查連線並補發探針
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && myRoomId) {
+        if (!localWs || localWs.readyState !== WebSocket.OPEN) {
+          initNetworkForRoom(myRoomId);
+        }
+        broadcastToRoom({
+          type: 'ROOM_PING',
+          senderId: myPlayerId,
+          senderName: myPlayerName,
+          roomId: myRoomId
+        });
+      }
+    });
 
     // 手牌排序演算法：百搭牌 (Joker) 嚴格置於最右側
     function sortHandByValue(cards) {
