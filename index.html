@@ -2540,14 +2540,18 @@
             playerName: myPlayerName
           });
         };
-        // 立即發送探測與加入封包 (0ms 與 200ms 雙發高可靠防丟包)
+        // 立即發送探測與加入封包 (0ms, 200ms, 450ms, 700ms 多階發送防行動網路丟包)
         sendJoinPing();
-        const secondPingTimer = setTimeout(sendJoinPing, 200);
+        const pingTimers = [
+          setTimeout(sendJoinPing, 200),
+          setTimeout(sendJoinPing, 450),
+          setTimeout(sendJoinPing, 700)
+        ];
 
-        // 450ms 極速無人響應仲裁：若無現有房主響應，本地升格為權威房主
+        // 950ms 跨裝置緩衝仲裁：若無現有房主響應，本地才升格為權威房主
         joinRetryInterval = setTimeout(() => {
           joinRetryInterval = null;
-          clearTimeout(secondPingTimer);
+          pingTimers.forEach(t => clearTimeout(t));
 
           const hasRemoteHost = roomState && isSameRoom(roomState.roomId, codeInput) &&
             roomState.players && roomState.players.some(p => p.isHost && p.id !== myPlayerId);
@@ -2783,10 +2787,14 @@
       }
       const mePlayer = roomState?.players?.find(p => p.id === myPlayerId);
       if (mePlayer && !mePlayer.initialMeldDone) {
-        const initialHandLen = (roomState.hands && roomState.hands[myPlayerId]) ? roomState.hands[myPlayerId].length : clientHand.length;
-        const playedCount = initialHandLen - clientHand.length;
-        if (playedCount <= 0) {
-          showToast('❄️ 尚未破冰：首次出牌總點數需 ≥ 30 點！若無法出牌請點「📥 抽牌並 Pass」。');
+        let boardPoints = 0;
+        for (const g of clientBoard) {
+          if (g && g.length >= 3) {
+            boardPoints += getGroupPoints(g);
+          }
+        }
+        if (boardPoints < 30) {
+          showToast(`❄️ 尚未破冰：首次出牌總點數需 ≥ 30 點！目前桌面僅 ${boardPoints} 點。若無法出牌請點「📥 抽牌並 Pass」。`);
           return;
         }
       }
