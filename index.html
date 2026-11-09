@@ -416,10 +416,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      cursor: grab;
       position: relative;
       transition: transform 0.15s ease, box-shadow 0.15s ease, outline 0.15s ease;
       flex-shrink: 0;
+      touch-action: none; /* 防止手機觸控拖曳引發網頁滾動衝突 */
+      user-select: none;
+      -webkit-user-select: none;
     }
     @media (max-width: 640px) {
       .rummi-tile {
@@ -428,6 +431,7 @@
       }
     }
     .rummi-tile:active {
+      cursor: grabbing;
       transform: translateY(2px);
       box-shadow: 0 1px 0 #bbb4a2, 0 2px 3px rgba(0, 0, 0, 0.4);
     }
@@ -437,8 +441,58 @@
       box-shadow: 0 8px 15px rgba(250, 204, 21, 0.5), 0 3px 0 #bbb4a2;
       z-index: 20;
     }
-    .rummi-tile.from-hand {
-      /* 手牌提示 */
+    .rummi-tile.dragging-origin {
+      opacity: 0.35;
+      filter: grayscale(0.25);
+    }
+
+    /* 拖曳中的浮動鏡像牌磚 (Drag Ghost) */
+    .tile-drag-ghost {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%) scale(1.12);
+      filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.65));
+      transition: none;
+      opacity: 0.96;
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.85), 0 6px 0 #bbb4a2;
+    }
+    .tile-drag-badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 900;
+      border-radius: 999px;
+      padding: 2px 8px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+      border: 2px solid #ffffff;
+      pointer-events: none;
+      white-space: nowrap;
+      animation: pulseBadge 1.2s infinite;
+    }
+    @keyframes pulseBadge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* 拖曳目標高亮懸停反饋 (Drop Zone Hover) */
+    .tile-set-card.drop-hover {
+      outline: 3px solid #38bdf8 !important;
+      box-shadow: 0 0 22px rgba(56, 189, 248, 0.75) !important;
+      background: rgba(30, 58, 138, 0.55) !important;
+      transform: scale(1.02);
+    }
+    .felt-board.drop-hover-board {
+      border-color: #facc15 !important;
+      background: rgba(234, 179, 8, 0.12) !important;
+      box-shadow: inset 0 0 25px rgba(250, 204, 21, 0.25);
+    }
+    .player-rack-dock.drop-hover-rack {
+      box-shadow: 0 -8px 30px rgba(56, 189, 248, 0.7) !important;
+      border-top-color: #38bdf8 !important;
     }
 
     .tile-num {
@@ -538,27 +592,13 @@
       align-items: center;
       gap: 8px;
     }
-    .btn-turn-draw {
-      background: #475569;
-      color: #ffffff;
-      border: 1px solid #64748b;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-turn-draw:hover:not(:disabled) {
-      background: #334155;
-    }
     .btn-turn-reset {
       background: #991b1b;
       color: #fee2e2;
       border: 1px solid #b91c1c;
-      padding: 6px 12px;
+      padding: 7px 14px;
       border-radius: 8px;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.2s;
@@ -566,25 +606,69 @@
     .btn-turn-reset:hover:not(:disabled) {
       background: #7f1d1d;
     }
-    .btn-turn-finish {
-      background: linear-gradient(135deg, #16a34a, #15803d);
-      color: #ffffff;
-      border: none;
-      padding: 6px 16px;
+    .btn-turn-reset:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* 智慧合併動態按鈕 */
+    .btn-turn-main {
+      padding: 7px 18px;
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: all 0.2s;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
     }
-    .btn-turn-finish:hover:not(:disabled) {
+    .btn-turn-main.state-disabled {
+      background: #475569;
+      color: #94a3b8;
+      border: 1px solid #64748b;
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-turn-main.state-pass {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: #ffffff;
+      border: 1px solid #f59e0b;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.45);
+    }
+    .btn-turn-main.state-pass:hover:not(:disabled) {
       filter: brightness(1.15);
       transform: translateY(-1px);
     }
-    .btn-turn-finish:disabled, .btn-turn-draw:disabled, .btn-turn-reset:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
+    .btn-turn-main.state-finish {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #ffffff;
+      border: 1px solid #4ade80;
+      box-shadow: 0 2px 10px rgba(22, 163, 74, 0.5);
+    }
+    .btn-turn-main.state-finish:hover:not(:disabled) {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    /* 房主踢出按鈕 */
+    .btn-kick-player {
+      background: #dc2626;
+      color: #ffffff;
+      border: 1px solid #ef4444;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-left: 8px;
+      transition: all 0.15s;
+    }
+    .btn-kick-player:hover {
+      background: #b91c1c;
+      transform: scale(1.05);
     }
 
     .rack-tiles-shelf {
@@ -884,11 +968,8 @@
         <button class="btn-turn-reset" id="btn-reset-turn" title="還原回合初手牌與牌桌" disabled>
           ↺ 還原桌面
         </button>
-        <button class="btn-turn-draw" id="btn-draw-card" title="無法出牌，抽 1 張並換人" disabled>
-          🃏 摸牌 / Pass
-        </button>
-        <button class="btn-turn-finish" id="btn-finish-turn" disabled>
-          ✓ 結束回合
+        <button class="btn-turn-main state-disabled" id="btn-turn-action" disabled>
+          等待其他玩家...
         </button>
       </div>
     </div>
@@ -951,13 +1032,18 @@
         等待房主開局（最少 2 人，最多 6 人）...
       </div>
 
-      <div class="modal-footer" style="margin-top:16px;">
-        <button class="btn-secondary" id="btn-add-bot" style="display:none;" title="本地測試加入模擬玩家">
-          🤖 加入測試玩家
+      <div class="modal-footer" style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <button class="btn-secondary" id="btn-waiting-leave" style="background:#dc2626; color:#ffffff; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+          🚪 離開房間
         </button>
-        <button class="btn-primary" id="btn-start-game" disabled>
-          開始遊戲 (人數需 >= 2)
-        </button>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn-secondary" id="btn-add-bot" style="display:none;" title="本地測試加入模擬玩家">
+            🤖 加入測試玩家
+          </button>
+          <button class="btn-primary" id="btn-start-game" disabled>
+            開始遊戲 (人數需 >= 2)
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1026,7 +1112,7 @@
     // 並開啟 Realtime Database（即時資料庫，規則設為 read/write: true 即可測試）
     // 將您的 Firebase 網頁設定貼在下方物件中即可線上多人連線！
     // ==========================================
-    const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyA4g8uOUQzsl4SoQNnSixIR5OkKmR4nbCE",
   authDomain: "nian-808a9.firebaseapp.com",
   databaseURL: "https://nian-808a9-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -1393,16 +1479,18 @@
       if (database) {
         database.ref(`rooms/${roomId}`).on("value", snapshot => {
           const val = snapshot.val();
-          if (val) {
-            handleStateUpdate(val);
-          }
+          handleStateUpdate(val);
         });
       } else {
         // 本地模式監聽廣播
         if (syncChannel) {
           syncChannel.onmessage = (e) => {
-            if (e.data && e.data.type === "ROOM_UPDATE" && e.data.roomId === roomId) {
-              handleStateUpdate(e.data.state);
+            if (e.data && e.data.roomId === roomId) {
+              if (e.data.type === "ROOM_UPDATE") {
+                handleStateUpdate(e.data.state);
+              } else if (e.data.type === "ROOM_DELETED") {
+                handleStateUpdate(null);
+              }
             }
           };
         }
@@ -1410,7 +1498,9 @@
         setInterval(() => {
           if (!database && currentRoomId === roomId) {
             const raw = localStorage.getItem(`rummikub_room_${roomId}`);
-            if (raw) {
+            if (!raw) {
+              if (roomState) handleStateUpdate(null);
+            } else {
               try {
                 const s = JSON.parse(raw);
                 if (JSON.stringify(s) !== JSON.stringify(roomState)) {
@@ -1424,6 +1514,43 @@
     }
 
     function handleStateUpdate(newState) {
+      if (!newState) {
+        // 房間已被刪除或解散
+        if (currentRoomId) {
+          localStorage.removeItem("rummikub_room_id");
+          currentRoomId = "";
+          roomState = null;
+          localBoard = [];
+          localHand = [];
+          turnStartSnapshot = null;
+          document.getElementById("modal-waiting").style.display = "none";
+          document.getElementById("modal-gameover").style.display = "none";
+          document.getElementById("modal-lobby").style.display = "flex";
+          document.getElementById("header-room-info").innerText = "尚未進入房間";
+          document.getElementById("btn-leave-room").style.display = "none";
+          updateNotice("該房間已關閉或被房主解散。", "warning");
+        }
+        return;
+      }
+
+      // 被踢出檢驗：若當前在房間內，但伺服器端玩家名單中已無自己
+      if (currentRoomId && newState.players && !newState.players[myPlayerId]) {
+        localStorage.removeItem("rummikub_room_id");
+        currentRoomId = "";
+        roomState = null;
+        localBoard = [];
+        localHand = [];
+        turnStartSnapshot = null;
+        document.getElementById("modal-waiting").style.display = "none";
+        document.getElementById("modal-gameover").style.display = "none";
+        document.getElementById("modal-lobby").style.display = "flex";
+        document.getElementById("header-room-info").innerText = "尚未進入房間";
+        document.getElementById("btn-leave-room").style.display = "none";
+        updateNotice("⚠️ 你已被房主移出房間", "alert");
+        alert("你已被房主移出房間");
+        return;
+      }
+
       const prevTurnPlayer = roomState ? roomState.currentTurnPlayerId : null;
       roomState = newState;
 
@@ -1834,6 +1961,99 @@
       syncRoomState(roomState);
     }
 
+    // 智慧合併操作按鈕觸發入口
+    function handleMainTurnAction() {
+      if (!isMyTurn()) return;
+      const tilesPlayedCount = turnStartSnapshot
+        ? (turnStartSnapshot.hand.length - localHand.length)
+        : 0;
+
+      if (tilesPlayedCount <= 0) {
+        // 未打出手牌：執行「抽牌並結束回合（Pass）」
+        handleDrawCardAndPass();
+      } else {
+        // 已有從手牌出牌：執行出牌驗證與結束回合
+        handleFinishTurn();
+      }
+    }
+
+    // 玩家主動離開房間 (支援房主自動移交與空房間刪除)
+    async function leaveRoom() {
+      if (!currentRoomId) return;
+      if (!confirm("確定要離開目前房間嗎？")) return;
+
+      sound.playClick();
+      const isHost = (roomState && roomState.hostId === myPlayerId);
+
+      if (roomState && roomState.players) {
+        delete roomState.players[myPlayerId];
+        if (roomState.hands) delete roomState.hands[myPlayerId];
+
+        const remainingPlayerIds = Object.keys(roomState.players);
+
+        if (remainingPlayerIds.length === 0) {
+          // 房間內已無其他玩家：直接從資料庫刪除該空房間
+          if (database && currentRoomId) {
+            await database.ref(`rooms/${currentRoomId}`).remove();
+          } else {
+            localStorage.removeItem(`rummikub_room_${currentRoomId}`);
+            if (syncChannel) {
+              syncChannel.postMessage({ type: "ROOM_DELETED", roomId: currentRoomId });
+            }
+          }
+        } else {
+          // 若離開者為房主，將房主權限自動移交給名單中的下一位玩家
+          if (isHost) {
+            const nextHostId = remainingPlayerIds[0];
+            roomState.hostId = nextHostId;
+            roomState.players[nextHostId].isHost = true;
+          }
+          syncRoomState(roomState);
+        }
+      }
+
+      // 清除 localStorage 中的自動重連紀錄
+      localStorage.removeItem("rummikub_room_id");
+      currentRoomId = "";
+      roomState = null;
+      localBoard = [];
+      localHand = [];
+      turnStartSnapshot = null;
+
+      // 切換回首頁輸入暱稱與房號畫面
+      document.getElementById("modal-waiting").style.display = "none";
+      document.getElementById("modal-gameover").style.display = "none";
+      document.getElementById("modal-lobby").style.display = "flex";
+      document.getElementById("header-room-info").innerText = "尚未進入房間";
+      document.getElementById("btn-leave-room").style.display = "none";
+      updateNotice("已離開房間，請輸入暱稱與房號重新加入或建立房間。", "info");
+    }
+
+    // 房主踢出玩家機制
+    function kickPlayer(targetId) {
+      if (!roomState || roomState.hostId !== myPlayerId) return;
+      if (targetId === myPlayerId) return;
+
+      const target = roomState.players ? roomState.players[targetId] : null;
+      const targetName = target ? target.name : "該玩家";
+
+      if (!confirm(`確定要將「${targetName}」踢出房間嗎？`)) return;
+
+      sound.playClick();
+
+      delete roomState.players[targetId];
+      if (roomState.hands) delete roomState.hands[targetId];
+
+      if (database && currentRoomId) {
+        database.ref(`rooms/${currentRoomId}/players/${targetId}`).remove();
+        if (roomState.hands) {
+          database.ref(`rooms/${currentRoomId}/hands/${targetId}`).remove();
+        }
+      }
+
+      syncRoomState(roomState);
+    }
+
     // 超時自動罰抽並換下一位
     function handleTimeout() {
       if (!isMyTurn()) return;
@@ -1930,7 +2150,8 @@
       // 頂部導航資訊
       document.getElementById("header-room-info").innerText =
         `房號: ${roomState.roomId} | ${isWaiting ? "等待中" : isPlaying ? "遊戲進行中" : "已結算"}`;
-      document.getElementById("btn-leave-room").style.display = "inline-flex";
+      // 僅在尚未開始遊戲的等待大廳顯示離開房間按鈕，遊戲開始後自動隱藏
+      document.getElementById("btn-leave-room").style.display = isWaiting ? "inline-flex" : "none";
 
       // 模態視窗顯示管理
       document.getElementById("modal-lobby").style.display = currentRoomId ? "none" : "flex";
@@ -1971,9 +2192,29 @@
       document.getElementById("selected-count-label").innerText = selectedCount;
       document.getElementById("btn-create-set").disabled = !myTurn || selectedCount < 3;
 
-      document.getElementById("btn-finish-turn").disabled = !myTurn;
-      document.getElementById("btn-draw-card").disabled = !myTurn;
-      document.getElementById("btn-reset-turn").disabled = !myTurn;
+      // 智慧合併動態按鈕 (非自己回合/未出牌Pass/已出牌確認結束)
+      const mainBtn = document.getElementById("btn-turn-action");
+      const resetBtn = document.getElementById("btn-reset-turn");
+      const tilesPlayedCount = (myTurn && turnStartSnapshot)
+        ? (turnStartSnapshot.hand.length - localHand.length)
+        : 0;
+
+      if (!myTurn) {
+        mainBtn.disabled = true;
+        mainBtn.className = "btn-turn-main state-disabled";
+        mainBtn.innerText = "等待其他玩家...";
+        resetBtn.disabled = true;
+      } else if (tilesPlayedCount <= 0) {
+        mainBtn.disabled = false;
+        mainBtn.className = "btn-turn-main state-pass";
+        mainBtn.innerHTML = "🃏 抽牌並結束回合（Pass）";
+        resetBtn.disabled = false;
+      } else {
+        mainBtn.disabled = false;
+        mainBtn.className = "btn-turn-main state-finish";
+        mainBtn.innerHTML = `✓ 確認出牌並結束回合 (${tilesPlayedCount}張)`;
+        resetBtn.disabled = false;
+      }
 
       // 牌桌狀態橫幅
       const statusBanner = document.getElementById("turn-status-banner");
@@ -2008,14 +2249,33 @@
       Object.values(players).forEach(p => {
         const item = document.createElement("div");
         item.className = "lobby-player-item";
+
+        // 僅房主在等待大廳可看到踢出按鈕，且不顯示在自己名字旁
+        let kickBtnHtml = "";
+        if (isHost && p.id !== myPlayerId) {
+          kickBtnHtml = `<button class="btn-kick-player" data-player-id="${p.id}" title="將該玩家踢出房間">踢出 ✕</button>`;
+        }
+
         item.innerHTML = `
           <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:1.1rem;">${p.isHost ? "👑" : "👤"}</span>
             <strong>${p.name} ${p.id === myPlayerId ? "(我)" : ""}</strong>
           </div>
-          <span style="font-size:0.75rem; color:#94a3b8;">${p.isHost ? "房主" : "準備中"}</span>
+          <div style="display:flex; align-items:center;">
+            <span style="font-size:0.75rem; color:#94a3b8;">${p.isHost ? "房主" : "準備中"}</span>
+            ${kickBtnHtml}
+          </div>
         `;
         listContainer.appendChild(item);
+      });
+
+      // 綁定踢出事件
+      listContainer.querySelectorAll(".btn-kick-player").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const targetId = btn.getAttribute("data-player-id");
+          if (targetId) kickPlayer(targetId);
+        };
       });
 
       document.getElementById("host-settings-box").style.display = isHost ? "block" : "none";
@@ -2087,6 +2347,316 @@
       });
     }
 
+    // ==========================================
+    // 跨裝置拖曳與點擊雙模式 (Pointer Events Drag & Drop)
+    // ==========================================
+
+    // 建立拖曳跟隨的浮動牌磚 (Ghost)
+    function createDragGhost(tile, count = 1) {
+      const ghost = createTileElement(tile, true);
+      ghost.classList.add("tile-drag-ghost");
+      if (count > 1) {
+        const badge = document.createElement("div");
+        badge.className = "tile-drag-badge";
+        badge.innerText = `+${count}張`;
+        ghost.appendChild(badge);
+      }
+      return ghost;
+    }
+
+    // 清除所有拖曳高亮反饋
+    function clearDropHovers() {
+      document.querySelectorAll(".drop-hover").forEach(el => el.classList.remove("drop-hover"));
+      const boardEl = document.getElementById("felt-board");
+      if (boardEl) boardEl.classList.remove("drop-hover-board");
+      const rackDock = document.querySelector(".player-rack-dock");
+      if (rackDock) rackDock.classList.remove("drop-hover-rack");
+    }
+
+    // 拖曳經過各放置目標時高亮
+    function updateDropHover(x, y) {
+      clearDropHovers();
+      const el = document.elementFromPoint(x, y);
+      if (!el) return;
+
+      const card = el.closest(".tile-set-card");
+      if (card) {
+        card.classList.add("drop-hover");
+        return;
+      }
+
+      const rack = el.closest(".player-rack-dock") || el.closest("#rack-tiles-shelf");
+      if (rack) {
+        const dock = document.querySelector(".player-rack-dock");
+        if (dock) dock.classList.add("drop-hover-rack");
+        return;
+      }
+
+      const board = el.closest("#felt-board");
+      if (board) {
+        board.classList.add("drop-hover-board");
+        return;
+      }
+    }
+
+    // 處理拖曳放置邏輯 (Drop Target Resolution)
+    function handleTileDrop(dropX, dropY, sourceData, draggedTiles) {
+      const dropEl = document.elementFromPoint(dropX, dropY);
+      if (!dropEl) {
+        renderGame();
+        return;
+      }
+
+      const draggedIds = new Set(draggedTiles.map(t => t.id));
+      const isSingleTile = draggedTiles.length === 1;
+
+      // 目標 A：手牌放置架 (Player Rack)
+      const rackEl = dropEl.closest(".player-rack-dock") || dropEl.closest("#rack-tiles-shelf");
+      if (rackEl) {
+        // 子情境 A1：手牌內部拖曳換位排序 (支援單張手牌拖曳換位)
+        if (sourceData.type === "hand" && isSingleTile) {
+          const activeHand = isMyTurn() ? localHand : ((roomState && roomState.hands && roomState.hands[myPlayerId]) || []);
+          const shelf = document.getElementById("rack-tiles-shelf");
+          const tileEls = Array.from(shelf.querySelectorAll(".rummi-tile"));
+          let insertIndex = activeHand.length;
+
+          for (let i = 0; i < tileEls.length; i++) {
+            const rect = tileEls[i].getBoundingClientRect();
+            const midX = rect.left + rect.width / 2;
+            if (dropX < midX) {
+              insertIndex = i;
+              break;
+            }
+          }
+
+          const oldIndex = activeHand.findIndex(t => t.id === sourceData.tile.id);
+          if (oldIndex >= 0) {
+            const [moved] = activeHand.splice(oldIndex, 1);
+            if (oldIndex < insertIndex) insertIndex--;
+            activeHand.splice(insertIndex, 0, moved);
+          }
+
+          sound.playClick();
+          selectedHandTileIds.clear();
+          selectedBoardItems = [];
+          if (!isMyTurn() && database && currentRoomId) {
+            database.ref(`rooms/${currentRoomId}/hands/${myPlayerId}`).set(activeHand);
+          }
+          renderGame();
+          return;
+        }
+
+        // 子情境 A2：將桌面上本回合剛打出的牌收回手牌
+        if (!isMyTurn()) {
+          renderGame();
+          return;
+        }
+
+        // 規則防呆：桌面上原有的牌嚴禁收回手牌，僅限本回合剛打出的牌
+        const startHandIds = new Set(((turnStartSnapshot && turnStartSnapshot.hand) || []).map(t => t.id));
+        const illegalTiles = draggedTiles.filter(t => !startHandIds.has(t.id));
+        if (illegalTiles.length > 0) {
+          sound.playTick();
+          alert("桌面上原有的牌不可收回手牌！只能收回本回合剛從手牌打出的牌。");
+          renderGame();
+          return;
+        }
+
+        // 合法收回手牌：從桌面移除並加回本地手牌
+        localBoard = localBoard.map(set => set.filter(t => !draggedIds.has(t.id))).filter(set => set.length > 0);
+        draggedTiles.forEach(tile => {
+          if (!localHand.some(t => t.id === tile.id)) {
+            localHand.push(tile);
+          }
+        });
+
+        sound.playClick();
+        selectedHandTileIds.clear();
+        selectedBoardItems = [];
+        renderGame();
+        return;
+      }
+
+      // 非自己回合時，禁止任何桌面牌組異動
+      if (!isMyTurn()) {
+        renderGame();
+        return;
+      }
+
+      // 目標 B：拖入現有特定牌組 (Tile Set Card)
+      const targetCard = dropEl.closest(".tile-set-card");
+      if (targetCard) {
+        const targetSetId = parseInt(targetCard.dataset.setId, 10);
+        if (!isNaN(targetSetId) && localBoard[targetSetId]) {
+          // 破冰檢查：未破冰玩家不能在回合初即存在的舊桌面牌組上加牌
+          const me = roomState.players && roomState.players[myPlayerId];
+          if (me && !me.isIceBroken) {
+            const initialBoardCount = (turnStartSnapshot && turnStartSnapshot.board) ? turnStartSnapshot.board.length : 0;
+            if (targetSetId < initialBoardCount) {
+              sound.playTick();
+              alert("尚未破冰！破冰回合只能打出全新的純手牌牌組，不能在桌上原有牌組加牌。");
+              renderGame();
+              return;
+            }
+          }
+
+          // 從手牌移除拖曳的牌
+          localHand = localHand.filter(t => !draggedIds.has(t.id));
+
+          // 目標牌組
+          const targetSet = localBoard[targetSetId];
+
+          // 從其他桌面牌組移除拖曳的牌
+          localBoard.forEach((set, sIdx) => {
+            if (sIdx !== targetSetId) {
+              localBoard[sIdx] = set.filter(t => !draggedIds.has(t.id));
+            }
+          });
+
+          // 加入目標牌組（避免重複）
+          const currentInTarget = new Set(targetSet.map(t => t.id));
+          draggedTiles.forEach(tile => {
+            if (!currentInTarget.has(tile.id)) {
+              targetSet.push(tile);
+            }
+          });
+
+          // 依照數字由小到大自動排序
+          targetSet.sort((a, b) => (a.number || 99) - (b.number || 99));
+
+          // 清理空牌組
+          localBoard = localBoard.filter(set => set.length > 0);
+
+          sound.playClick();
+          selectedHandTileIds.clear();
+          selectedBoardItems = [];
+          renderGame();
+          return;
+        }
+      }
+
+      // 目標 C：拖入桌面空白處 (建立新牌組)
+      const feltEl = dropEl.closest("#felt-board");
+      if (feltEl) {
+        // 從手牌移除拖曳的牌
+        localHand = localHand.filter(t => !draggedIds.has(t.id));
+
+        // 從原本牌組移除拖曳的牌
+        localBoard = localBoard.map(set => set.filter(t => !draggedIds.has(t.id))).filter(set => set.length > 0);
+
+        // 建立新獨立牌組
+        const newSet = [...draggedTiles];
+        newSet.sort((a, b) => (a.number || 99) - (b.number || 99));
+        localBoard.push(newSet);
+
+        sound.playClick();
+        selectedHandTileIds.clear();
+        selectedBoardItems = [];
+        renderGame();
+        return;
+      }
+
+      // 放置在無效區域時，刷新介面還原原貌
+      renderGame();
+    }
+
+    // 為牌磚綁定 Pointer Events (跨裝置相容觸控與滑鼠，支援點擊選取與拖曳放置雙模式)
+    function setupTilePointerEvents(tileEl, sourceData) {
+      tileEl.addEventListener("pointerdown", (e) => {
+        // 只響應滑鼠主鍵或觸控
+        if (e.button !== 0 && e.pointerType === "mouse") return;
+
+        // 非自己回合且為桌面牌磚時，唯讀禁止互動
+        if (!isMyTurn() && sourceData.type === "board") return;
+
+        // 未破冰時檢查是否嘗試觸碰回合初舊牌
+        if (isMyTurn() && sourceData.type === "board") {
+          const me = roomState.players && roomState.players[myPlayerId];
+          if (me && !me.isIceBroken) {
+            const initialBoardCount = (turnStartSnapshot && turnStartSnapshot.board) ? turnStartSnapshot.board.length : 0;
+            if (sourceData.setId < initialBoardCount) {
+              alert("尚未破冰！首次出牌必須純粹由手牌組成全新牌組，不能碰觸桌面上原有的牌。");
+              return;
+            }
+          }
+        }
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        let hasMoved = false;
+        let ghostEl = null;
+
+        // 判斷是否為多選批次拖曳
+        const isHand = sourceData.type === "hand";
+        const isAlreadySelected = isHand
+          ? selectedHandTileIds.has(sourceData.tile.id)
+          : selectedBoardItems.some(item => item.setId === sourceData.setId && item.tileIndex === sourceData.tileIndex);
+
+        let draggedTiles = [];
+        if (isAlreadySelected) {
+          const selected = getSelectedTiles();
+          draggedTiles = selected.length > 0 ? selected : [sourceData.tile];
+        } else {
+          draggedTiles = [sourceData.tile];
+        }
+
+        const onPointerMove = (moveEvt) => {
+          const dx = moveEvt.clientX - startX;
+          const dy = moveEvt.clientY - startY;
+          const dist = Math.hypot(dx, dy);
+
+          // 位移超過 5px 判定進入拖曳模式
+          if (!hasMoved && dist >= 5) {
+            hasMoved = true;
+            ghostEl = createDragGhost(sourceData.tile, draggedTiles.length);
+            ghostEl.style.left = `${moveEvt.clientX}px`;
+            ghostEl.style.top = `${moveEvt.clientY}px`;
+            document.body.appendChild(ghostEl);
+            tileEl.classList.add("dragging-origin");
+          }
+
+          if (hasMoved && ghostEl) {
+            moveEvt.preventDefault();
+            ghostEl.style.left = `${moveEvt.clientX}px`;
+            ghostEl.style.top = `${moveEvt.clientY}px`;
+            updateDropHover(moveEvt.clientX, moveEvt.clientY);
+          }
+        };
+
+        const onPointerUp = (upEvt) => {
+          window.removeEventListener("pointermove", onPointerMove);
+          window.removeEventListener("pointerup", onPointerUp);
+          window.removeEventListener("pointercancel", onPointerUp);
+
+          clearDropHovers();
+          tileEl.classList.remove("dragging-origin");
+
+          if (ghostEl && ghostEl.parentNode) {
+            ghostEl.parentNode.removeChild(ghostEl);
+            ghostEl = null;
+          }
+
+          if (!hasMoved) {
+            // 位移未達 5px：維持原本點擊選取 (Click Selection)
+            if (isMyTurn()) {
+              if (isHand) {
+                toggleSelectHandTile(sourceData.tile.id);
+              } else if (sourceData.type === "board") {
+                toggleSelectBoardTile(sourceData.setId, sourceData.tileIndex, sourceData.tile);
+              }
+            }
+          } else {
+            // 執行拖曳放置 (Drag & Drop)
+            handleTileDrop(upEvt.clientX, upEvt.clientY, sourceData, draggedTiles);
+          }
+        };
+
+        window.addEventListener("pointermove", onPointerMove, { passive: false });
+        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointercancel", onPointerUp);
+      });
+    }
+
     // 渲染牌桌上的牌組
     function renderFeltBoard() {
       const boardEl = document.getElementById("felt-board");
@@ -2110,6 +2680,7 @@
         const valRes = isValidSet(set);
         const card = document.createElement("div");
         card.className = `tile-set-card ${valRes.valid ? "valid-set" : "invalid-set"}`;
+        card.dataset.setId = sIdx;
 
         // 標籤列
         let tagHtml = "";
@@ -2139,7 +2710,7 @@
           const tileEl = createTileElement(tile, isSelected);
 
           if (myTurn) {
-            tileEl.onclick = () => toggleSelectBoardTile(sIdx, tIdx, tile);
+            setupTilePointerEvents(tileEl, { type: "board", setId: sIdx, tileIndex: tIdx, tile: tile });
           }
           tilesContainer.appendChild(tileEl);
         });
@@ -2185,9 +2756,7 @@
         const isSelected = selectedHandTileIds.has(tile.id);
         const tileEl = createTileElement(tile, isSelected);
 
-        if (isMyTurn()) {
-          tileEl.onclick = () => toggleSelectHandTile(tile.id);
-        }
+        setupTilePointerEvents(tileEl, { type: "hand", index: idx, tile: tile });
         shelf.appendChild(tileEl);
       });
     }
@@ -2440,13 +3009,10 @@
         document.getElementById("modal-rules").style.display = "flex";
       };
 
-      // 離開房間
-      document.getElementById("btn-leave-room").onclick = () => {
-        if (confirm("確定要離開目前房間嗎？")) {
-          localStorage.removeItem("rummikub_room_id");
-          window.location.reload();
-        }
-      };
+      // 離開房間事件 (Header 與等待室彈窗)
+      document.getElementById("btn-leave-room").onclick = leaveRoom;
+      const waitingLeaveBtn = document.getElementById("btn-waiting-leave");
+      if (waitingLeaveBtn) waitingLeaveBtn.onclick = leaveRoom;
 
       // 加入房間按鈕
       document.getElementById("btn-enter-room").onclick = () => {
@@ -2476,8 +3042,8 @@
       // 牌桌操作按鈕
       document.getElementById("btn-create-set").onclick = handleCreateNewSet;
       document.getElementById("btn-reset-turn").onclick = handleResetTurn;
-      document.getElementById("btn-draw-card").onclick = handleDrawCardAndPass;
-      document.getElementById("btn-finish-turn").onclick = handleFinishTurn;
+      const turnActionBtn = document.getElementById("btn-turn-action");
+      if (turnActionBtn) turnActionBtn.onclick = handleMainTurnAction;
 
       // 結算再玩一局
       document.getElementById("btn-restart-game").onclick = () => {
