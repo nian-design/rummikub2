@@ -111,6 +111,17 @@
     .btn-icon:hover {
       background: rgba(255, 255, 255, 0.2);
     }
+    .btn-icon.btn-leave {
+      background: rgba(220, 38, 38, 0.25);
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+      font-weight: 700;
+    }
+    .btn-icon.btn-leave:hover {
+      background: rgba(220, 38, 38, 0.55);
+      color: #ffffff;
+      border-color: #ef4444;
+    }
 
     /* 頂部通知告示牌 */
     #notice-bar {
@@ -905,7 +916,7 @@
     <div class="header-actions">
       <button class="btn-icon" id="btn-sound-toggle" title="切換音效">🔊 音效開</button>
       <button class="btn-icon" id="btn-show-rules" title="遊戲規則">📖 規則說明</button>
-      <button class="btn-icon" id="btn-leave-room" style="display:none;" title="離開房間">🚪 離開</button>
+      <button class="btn-icon btn-leave" id="btn-leave-room" style="display:none;" title="離開房間">🚪 離開房間</button>
     </div>
   </header>
 
@@ -1068,9 +1079,12 @@
         </tbody>
       </table>
 
-      <div class="modal-footer" style="margin-top:20px;">
+      <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <button class="btn-secondary" id="btn-gameover-leave" style="background:#dc2626; color:#ffffff; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+          🚪 離開房間 (返回首頁)
+        </button>
         <button class="btn-primary" id="btn-restart-game">
-          再玩一局 (返回大廳)
+          再玩一局 (返回等待室)
         </button>
       </div>
     </div>
@@ -1112,7 +1126,7 @@
     // 並開啟 Realtime Database（即時資料庫，規則設為 read/write: true 即可測試）
     // 將您的 Firebase 網頁設定貼在下方物件中即可線上多人連線！
     // ==========================================
-   const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyA4g8uOUQzsl4SoQNnSixIR5OkKmR4nbCE",
   authDomain: "nian-808a9.firebaseapp.com",
   databaseURL: "https://nian-808a9-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -1460,8 +1474,68 @@
       bar.innerHTML = `<span>${text}</span>`;
     }
 
+    // 自動清理過期房間 (超過 3 小時未更新或玩家數為 0 的空房間)
+    async function cleanExpiredRooms() {
+      const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+      const now = Date.now();
+
+      if (database) {
+        try {
+          const snap = await database.ref("rooms").once("value");
+          const allRooms = snap.val();
+          if (allRooms && typeof allRooms === "object") {
+            const updates = {};
+            Object.keys(allRooms).forEach(rId => {
+              const r = allRooms[rId];
+              if (!r) {
+                updates[`rooms/${rId}`] = null;
+                return;
+              }
+              const lastActive = r.updatedAt || r.turnStartTime || r.createdAt || 0;
+              const hasNoPlayers = !r.players || Object.keys(r.players).length === 0;
+              if (hasNoPlayers || (now - lastActive > THREE_HOURS_MS)) {
+                updates[`rooms/${rId}`] = null;
+              }
+            });
+            if (Object.keys(updates).length > 0) {
+              await database.ref().update(updates);
+            }
+          }
+        } catch (err) {
+          console.warn("清理過期房間異常:", err);
+        }
+      } else {
+        try {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("rummikub_room_") && key !== "rummikub_room_id") {
+              const raw = localStorage.getItem(key);
+              if (raw) {
+                try {
+                  const r = JSON.parse(raw);
+                  if (r && typeof r === "object") {
+                    const lastActive = r.updatedAt || r.turnStartTime || r.createdAt || 0;
+                    const hasNoPlayers = !r.players || Object.keys(r.players).length === 0;
+                    if (hasNoPlayers || (now - lastActive > THREE_HOURS_MS)) {
+                      keysToRemove.push(key);
+                    }
+                  }
+                } catch (parseErr) {}
+              }
+            }
+          }
+          keysToRemove.forEach(k => localStorage.removeItem(k));
+        } catch (err) {
+          console.warn("本地清理過期房間異常:", err);
+        }
+      }
+    }
+
     // 儲存/同步房間狀態
     function syncRoomState(newState) {
+      if (!newState) return;
+      newState.updatedAt = Date.now();
       roomState = newState;
       if (database && currentRoomId) {
         database.ref(`rooms/${currentRoomId}`).set(newState);
@@ -1528,12 +1602,12 @@
           document.getElementById("modal-lobby").style.display = "flex";
           document.getElementById("header-room-info").innerText = "尚未進入房間";
           document.getElementById("btn-leave-room").style.display = "none";
-          updateNotice("該房間已關閉或被房主解散。", "warning");
+          updateNotice("該房間已關閉或被解散。", "warning");
         }
         return;
       }
 
-      // 被踢出檢驗：若當前在房間內，但伺服器端玩家名單中已無自己
+      // 被移出房間檢驗：若當前在房間內，但伺服器端玩家名單中已無自己
       if (currentRoomId && newState.players && !newState.players[myPlayerId]) {
         localStorage.removeItem("rummikub_room_id");
         currentRoomId = "";
@@ -1546,9 +1620,26 @@
         document.getElementById("modal-lobby").style.display = "flex";
         document.getElementById("header-room-info").innerText = "尚未進入房間";
         document.getElementById("btn-leave-room").style.display = "none";
-        updateNotice("⚠️ 你已被房主移出房間", "alert");
-        alert("你已被房主移出房間");
+        updateNotice("⚠️ 你已離開或被移出房間", "alert");
         return;
+      }
+
+      // 遊戲進行中若僅剩 1 名存活玩家：直接宣告該名留守玩家獲勝並進入結算
+      if (newState.status === "playing") {
+        const remainingPlayerIds = Object.keys(newState.players || {});
+        if (remainingPlayerIds.length === 1) {
+          const soleWinnerId = remainingPlayerIds[0];
+          newState.status = "finished";
+          newState.winnerId = soleWinnerId;
+          newState.currentTurnPlayerId = null;
+          if (newState.players[soleWinnerId]) {
+            newState.players[soleWinnerId].finalScore = newState.players[soleWinnerId].finalScore || 0;
+          }
+          if (soleWinnerId === myPlayerId) {
+            sound.playWin();
+            updateNotice("🎉 其他玩家已全數離開，恭喜您獲勝！", "info");
+          }
+        }
       }
 
       const prevTurnPlayer = roomState ? roomState.currentTurnPlayerId : null;
@@ -1570,6 +1661,9 @@
 
     // 加入/建立房間
     async function joinOrCreateRoom(roomId, nickname) {
+      // 順便檢查並自動清理超過 3 小時未更新或已無玩家的過期舊房間
+      cleanExpiredRooms();
+
       currentRoomId = roomId;
       myPlayerName = nickname;
       localStorage.setItem("rummikub_room_id", roomId);
@@ -1598,6 +1692,7 @@
         const newRoom = {
           roomId: roomId,
           createdAt: Date.now(),
+          updatedAt: Date.now(),
           status: "waiting", // waiting | playing | finished
           hostId: myPlayerId,
           turnTimeLimit: 60,
@@ -1622,6 +1717,7 @@
         syncRoomState(newRoom);
       } else {
         // 房客加入房間 (或斷線重連)
+        existing.updatedAt = Date.now();
         const players = existing.players || {};
         if (!players[myPlayerId]) {
           const count = Object.keys(players).length;
@@ -1882,8 +1978,11 @@
     function handleFinishTurn() {
       if (!isMyTurn()) return;
 
+      const currentHand = localHand || [];
+      const startHand = (turnStartSnapshot && turnStartSnapshot.hand) || [];
+      const tilesPlayedCount = startHand.length - currentHand.length;
+
       // 檢查 1：是否至少打出 1 張手牌
-      const tilesPlayedCount = turnStartSnapshot.hand.length - localHand.length;
       if (tilesPlayedCount <= 0) {
         alert("您尚未從手牌打出任何牌！若無法出牌請點擊「摸牌 / Pass」。");
         return;
@@ -1896,10 +1995,10 @@
       }
 
       // 檢查 3：破冰檢驗 (若尚未破冰)
-      const me = roomState.players[myPlayerId];
-      if (!me.isIceBroken) {
+      const me = roomState.players && roomState.players[myPlayerId];
+      if (me && !me.isIceBroken) {
         // 必須純粹為新生牌組，不可動用回合初的牌
-        const initialBoardCount = turnStartSnapshot.board.length;
+        const initialBoardCount = (turnStartSnapshot && turnStartSnapshot.board) ? turnStartSnapshot.board.length : 0;
         if (localBoard.length < initialBoardCount) {
           alert("破冰違規：您移除了牌桌上原有的牌組！已為您還原。");
           handleResetTurn();
@@ -1923,34 +2022,63 @@
         me.isIceBroken = true;
       }
 
-      // 通過驗證！音效慶祝
+      // ★★★ 勝利判定最高優先級 ★★★
+      // 一旦通過牌桌合法性與破冰檢查，立刻檢查手牌數量是否為 0 (currentHand.length === 0)
+      if (currentHand.length === 0) {
+        sound.playWin();
+
+        const now = Date.now();
+        const elapsedSec = Math.min(
+          roomState.turnTimeLimit || 60,
+          Math.max(1, Math.floor((now - (roomState.turnStartTime || now)) / 1000))
+        );
+
+        if (roomState.players && roomState.players[myPlayerId]) {
+          roomState.players[myPlayerId].totalThinkingTime =
+            (roomState.players[myPlayerId].totalThinkingTime || 0) + elapsedSec;
+          roomState.players[myPlayerId].handCount = 0;
+        }
+        if (!roomState.hands) roomState.hands = {};
+        roomState.hands[myPlayerId] = [];
+        roomState.board = localBoard;
+
+        // 立即觸發結算，絕不切換下一位玩家！
+        triggerGameOver(myPlayerId);
+        return;
+      }
+
+      // 未清空手牌：通過驗證！音效慶祝並換下一位
       sound.playSuccess();
       commitTurnEnd(true);
     }
 
     // 提交回合結果，換下一位玩家或宣告獲勝
     function commitTurnEnd(didPlayValidCards) {
+      const currentHand = localHand || [];
       const now = Date.now();
       const elapsedSec = Math.min(
-        roomState.turnTimeLimit,
+        roomState.turnTimeLimit || 60,
         Math.max(1, Math.floor((now - (roomState.turnStartTime || now)) / 1000))
       );
 
       // 累計思考時間
-      roomState.players[myPlayerId].totalThinkingTime =
-        (roomState.players[myPlayerId].totalThinkingTime || 0) + elapsedSec;
-      roomState.players[myPlayerId].handCount = localHand.length;
-      roomState.hands[myPlayerId] = localHand;
+      if (roomState.players && roomState.players[myPlayerId]) {
+        roomState.players[myPlayerId].totalThinkingTime =
+          (roomState.players[myPlayerId].totalThinkingTime || 0) + elapsedSec;
+        roomState.players[myPlayerId].handCount = currentHand.length;
+      }
+      if (!roomState.hands) roomState.hands = {};
+      roomState.hands[myPlayerId] = currentHand;
       roomState.board = localBoard;
 
-      // 檢查是否獲勝 (清空手牌)
-      if (localHand.length === 0) {
+      // 雙重保險檢查是否獲勝 (清空手牌)
+      if (currentHand.length === 0) {
         triggerGameOver(myPlayerId);
         return;
       }
 
       // 輪到下一位玩家
-      const playerIds = Object.keys(roomState.players);
+      const playerIds = Object.keys(roomState.players || {});
       const currentIdx = playerIds.indexOf(myPlayerId);
       const nextIdx = (currentIdx + 1) % playerIds.length;
       const nextPlayerId = playerIds[nextIdx];
@@ -1964,9 +2092,9 @@
     // 智慧合併操作按鈕觸發入口
     function handleMainTurnAction() {
       if (!isMyTurn()) return;
-      const tilesPlayedCount = turnStartSnapshot
-        ? (turnStartSnapshot.hand.length - localHand.length)
-        : 0;
+      const currentHand = localHand || [];
+      const startHand = (turnStartSnapshot && turnStartSnapshot.hand) || [];
+      const tilesPlayedCount = startHand.length - currentHand.length;
 
       if (tilesPlayedCount <= 0) {
         // 未打出手牌：執行「抽牌並結束回合（Pass）」
@@ -1977,56 +2105,126 @@
       }
     }
 
-    // 玩家主動離開房間 (支援房主自動移交與空房間刪除)
+    // 玩家主動離開房間 (支援等待室、遊戲進行中安全退出、手牌回庫、房主移交與空房刪除)
     async function leaveRoom() {
       if (!currentRoomId) return;
-      if (!confirm("確定要離開目前房間嗎？")) return;
+
+      const isPlaying = roomState && roomState.status === "playing";
+      const isFinished = roomState && roomState.status === "finished";
+
+      const confirmMsg = isPlaying
+        ? "確定要中途退出遊戲嗎？退出後將無法回到本局。"
+        : "確定要離開目前房間嗎？";
+
+      if (!confirm(confirmMsg)) return;
 
       sound.playClick();
-      const isHost = (roomState && roomState.hostId === myPlayerId);
+      const leavingPlayerId = myPlayerId;
+      const leavingRoomId = currentRoomId;
 
       if (roomState && roomState.players) {
-        delete roomState.players[myPlayerId];
-        if (roomState.hands) delete roomState.hands[myPlayerId];
+        const isHost = (roomState.hostId === leavingPlayerId);
+        const wasCurrentTurn = (roomState.currentTurnPlayerId === leavingPlayerId);
 
-        const remainingPlayerIds = Object.keys(roomState.players);
-
-        if (remainingPlayerIds.length === 0) {
-          // 房間內已無其他玩家：直接從資料庫刪除該空房間
-          if (database && currentRoomId) {
-            await database.ref(`rooms/${currentRoomId}`).remove();
+        // 若在遊戲進行中主動退出：將手上的牌自動洗回公共牌庫 (Deck)，不啟用電腦 AI 代打
+        if (isPlaying) {
+          let handToReturn = [];
+          if (wasCurrentTurn) {
+            // 當前出牌者離開：桌面還原至該回合初始狀態
+            if (turnStartSnapshot && turnStartSnapshot.board) {
+              roomState.board = JSON.parse(JSON.stringify(turnStartSnapshot.board));
+            }
+            handToReturn = (turnStartSnapshot && turnStartSnapshot.hand) || localHand || (roomState.hands && roomState.hands[leavingPlayerId]) || [];
           } else {
-            localStorage.removeItem(`rummikub_room_${currentRoomId}`);
+            handToReturn = (roomState.hands && roomState.hands[leavingPlayerId]) || [];
+          }
+
+          if (handToReturn.length > 0) {
+            if (!roomState.deck) roomState.deck = [];
+            roomState.deck.push(...handToReturn);
+            // 洗牌
+            roomState.deck.sort(() => Math.random() - 0.5);
+          }
+        }
+
+        // 徹底從玩家與手牌名單移除
+        delete roomState.players[leavingPlayerId];
+        if (roomState.hands) delete roomState.hands[leavingPlayerId];
+
+        if (database && leavingRoomId) {
+          await database.ref(`rooms/${leavingRoomId}/players/${leavingPlayerId}`).remove();
+          await database.ref(`rooms/${leavingRoomId}/hands/${leavingPlayerId}`).remove();
+        }
+
+        const remainingPlayerIds = Object.keys(roomState.players || {});
+
+        // 情況 1：房間內活躍玩家人數歸零 -> 徹底從資料庫刪除該空房間
+        if (remainingPlayerIds.length === 0) {
+          if (database && leavingRoomId) {
+            await database.ref(`rooms/${leavingRoomId}`).remove();
+          } else {
+            localStorage.removeItem(`rummikub_room_${leavingRoomId}`);
             if (syncChannel) {
-              syncChannel.postMessage({ type: "ROOM_DELETED", roomId: currentRoomId });
+              syncChannel.postMessage({ type: "ROOM_DELETED", roomId: leavingRoomId });
             }
           }
-        } else {
-          // 若離開者為房主，將房主權限自動移交給名單中的下一位玩家
+        }
+        // 情況 2：遊戲進行中且僅剩 1 名玩家 -> 直接判定該名留守玩家獲勝
+        else if (isPlaying && remainingPlayerIds.length === 1) {
+          const soleWinnerId = remainingPlayerIds[0];
+          roomState.status = "finished";
+          roomState.winnerId = soleWinnerId;
+          roomState.currentTurnPlayerId = null;
+          if (isHost) {
+            roomState.hostId = soleWinnerId;
+            if (roomState.players[soleWinnerId]) {
+              roomState.players[soleWinnerId].isHost = true;
+            }
+          }
+          if (roomState.players[soleWinnerId]) {
+            roomState.players[soleWinnerId].finalScore = roomState.players[soleWinnerId].finalScore || 0;
+          }
+          syncRoomState(roomState);
+        }
+        // 情況 3：仍有多位玩家 (或等待室/結算室)
+        else {
+          // 若離開者為房主，將房主權限自動移交給名單中下一位玩家
           if (isHost) {
             const nextHostId = remainingPlayerIds[0];
             roomState.hostId = nextHostId;
-            roomState.players[nextHostId].isHost = true;
+            if (roomState.players[nextHostId]) {
+              roomState.players[nextHostId].isHost = true;
+            }
           }
+
+          // 若在遊戲進行中且離開者為當前出牌者，自動將回合切換給下一位玩家並重置計時器
+          if (isPlaying && wasCurrentTurn) {
+            const nextPlayerId = remainingPlayerIds[0];
+            roomState.currentTurnPlayerId = nextPlayerId;
+            roomState.turnStartTime = Date.now();
+          }
+
           syncRoomState(roomState);
         }
       }
 
-      // 清除 localStorage 中的自動重連紀錄
+      // 清除本地 localStorage 重連紀錄
       localStorage.removeItem("rummikub_room_id");
       currentRoomId = "";
       roomState = null;
       localBoard = [];
       localHand = [];
       turnStartSnapshot = null;
+      selectedHandTileIds.clear();
+      selectedBoardItems = [];
 
-      // 切換回首頁輸入暱稱與房號畫面
+      // 畫面切換回首頁大廳
       document.getElementById("modal-waiting").style.display = "none";
       document.getElementById("modal-gameover").style.display = "none";
       document.getElementById("modal-lobby").style.display = "flex";
       document.getElementById("header-room-info").innerText = "尚未進入房間";
       document.getElementById("btn-leave-room").style.display = "none";
-      updateNotice("已離開房間，請輸入暱稱與房號重新加入或建立房間。", "info");
+      updateNotice("已離開房間。", "info");
     }
 
     // 房主踢出玩家機制
@@ -2062,32 +2260,69 @@
       handleDrawCardAndPass();
     }
 
+    // 房主為意外斷線或超時未行動之玩家代行摸牌換人 (避免牌局卡死)
+    function hostForceTimeoutPass(timedOutPlayerId) {
+      if (!roomState || roomState.status !== "playing") return;
+      if (roomState.hostId !== myPlayerId) return;
+      if (!timedOutPlayerId || timedOutPlayerId === myPlayerId) return;
+
+      const player = roomState.players && roomState.players[timedOutPlayerId];
+      if (!player) return;
+
+      if (!roomState.deck) roomState.deck = [];
+      if (!roomState.hands) roomState.hands = {};
+      if (!roomState.hands[timedOutPlayerId]) roomState.hands[timedOutPlayerId] = [];
+
+      if (roomState.deck.length > 0) {
+        const drawn = roomState.deck.shift();
+        roomState.hands[timedOutPlayerId].push(drawn);
+      }
+      player.handCount = roomState.hands[timedOutPlayerId].length;
+
+      // 切換至下一位玩家
+      const playerIds = Object.keys(roomState.players || {});
+      const currentIdx = playerIds.indexOf(timedOutPlayerId);
+      const nextIdx = (currentIdx + 1) % playerIds.length;
+      const nextPlayerId = playerIds[nextIdx];
+
+      roomState.currentTurnPlayerId = nextPlayerId;
+      roomState.turnStartTime = Date.now();
+
+      updateNotice(`⏰ 玩家【${player.name}】連線中斷或超時未出牌，系統已自動為其罰抽 1 張並換下一位。`, "alert");
+      syncRoomState(roomState);
+    }
+
     // 遊戲結束計算成績榜
     function triggerGameOver(winnerId) {
       sound.playWin();
       roomState.status = "finished";
       roomState.winnerId = winnerId;
+      roomState.currentTurnPlayerId = null;
 
-      const players = roomState.players;
+      const players = roomState.players || {};
       const hands = roomState.hands || {};
 
       // 計算手牌負分 (百搭鬼牌扣30分)
       let totalNegativePoints = 0;
       Object.keys(players).forEach(pid => {
         if (pid !== winnerId) {
-          const h = hands[pid] || [];
+          const h = (hands && hands[pid]) || [];
           let penalty = 0;
           h.forEach(tile => {
             if (tile.color === "joker" || tile.number === 0) penalty += 30;
-            else penalty += tile.number;
+            else penalty += (tile.number || 0);
           });
-          players[pid].finalScore = -penalty;
+          if (players[pid]) {
+            players[pid].finalScore = -penalty;
+          }
           totalNegativePoints += penalty;
         }
       });
 
       // 贏家獲得其他所有人的扣分總和
-      players[winnerId].finalScore = totalNegativePoints;
+      if (players[winnerId]) {
+        players[winnerId].finalScore = totalNegativePoints;
+      }
 
       syncRoomState(roomState);
     }
@@ -2150,8 +2385,8 @@
       // 頂部導航資訊
       document.getElementById("header-room-info").innerText =
         `房號: ${roomState.roomId} | ${isWaiting ? "等待中" : isPlaying ? "遊戲進行中" : "已結算"}`;
-      // 僅在尚未開始遊戲的等待大廳顯示離開房間按鈕，遊戲開始後自動隱藏
-      document.getElementById("btn-leave-room").style.display = isWaiting ? "inline-flex" : "none";
+      // 在房間內時（等待大廳、遊戲中、結算後）均顯示離開房間按鈕
+      document.getElementById("btn-leave-room").style.display = currentRoomId ? "inline-flex" : "none";
 
       // 模態視窗顯示管理
       document.getElementById("modal-lobby").style.display = currentRoomId ? "none" : "flex";
@@ -2167,9 +2402,9 @@
         renderLeaderboard();
       }
 
-      // 手牌與桌面快照保護
+      // 手牌與桌面快照保護 (修復：僅在尚無快照時初始化，手牌出完歸零時絕不重新覆蓋手牌)
       if (isPlaying) {
-        if (isMyTurn() && (!turnStartSnapshot || localHand.length === 0)) {
+        if (isMyTurn() && !turnStartSnapshot) {
           initMyTurn();
         } else if (!isMyTurn()) {
           localHand = (roomState.hands && roomState.hands[myPlayerId]) || [];
@@ -2335,7 +2570,7 @@
           <div class="player-meta">
             <div class="player-name">${p.name} ${p.id === myPlayerId ? "⭐" : ""}</div>
             <div class="player-sub">
-              <span>🀄 ${p.handCount || 0} 張</span>
+              <span>🀄 ${p.id === myPlayerId && isMyTurn() ? (localHand || []).length : (p.handCount !== undefined ? p.handCount : ((roomState.hands && roomState.hands[p.id]) ? roomState.hands[p.id].length : 0))} 張</span>
               <span class="badge-ice ${p.isIceBroken ? "broken" : "frozen"}">${p.isIceBroken ? "🔥破冰" : "❄️未破"}</span>
             </div>
             <div style="font-size:0.68rem; color:#94a3b8; margin-top:2px;">
@@ -2749,7 +2984,7 @@
       const shelf = document.getElementById("rack-tiles-shelf");
       shelf.innerHTML = "";
 
-      const myHand = isMyTurn() ? localHand : (roomState.hands && roomState.hands[myPlayerId]) || [];
+      const myHand = isMyTurn() ? (localHand || []) : ((roomState.hands && roomState.hands[myPlayerId]) || []);
       document.getElementById("hand-count-num").innerText = myHand.length;
 
       myHand.forEach((tile, idx) => {
@@ -2885,9 +3120,14 @@
           bigOverlay.style.display = "none";
           if (isMyTurn()) {
             handleTimeout();
-          } else if (roomState.hostId === myPlayerId && roomState.currentTurnPlayerId && roomState.currentTurnPlayerId.startsWith("bot_")) {
-            // Bot 超時自動摸牌換人
-            runBotTurn(roomState.currentTurnPlayerId);
+          } else if (roomState.hostId === myPlayerId && roomState.currentTurnPlayerId) {
+            if (roomState.currentTurnPlayerId.startsWith("bot_")) {
+              // Bot 超時自動摸牌換人
+              runBotTurn(roomState.currentTurnPlayerId);
+            } else if (elapsed >= limit + 1) {
+              // 真人玩家斷線/超時未行動：由房主協助自動摸 1 張牌並換下一位，防止牌局卡死
+              hostForceTimeoutPass(roomState.currentTurnPlayerId);
+            }
           }
         } else {
           // 若輪到 Bot，在經過 2 秒思考後自動行動
@@ -3045,11 +3285,15 @@
       const turnActionBtn = document.getElementById("btn-turn-action");
       if (turnActionBtn) turnActionBtn.onclick = handleMainTurnAction;
 
-      // 結算再玩一局
+      // 結算再玩一局與離開房間
+      const gameoverLeaveBtn = document.getElementById("btn-gameover-leave");
+      if (gameoverLeaveBtn) gameoverLeaveBtn.onclick = leaveRoom;
+
       document.getElementById("btn-restart-game").onclick = () => {
         if (roomState && roomState.hostId === myPlayerId) {
           roomState.status = "waiting";
           roomState.board = [];
+          roomState.deck = [];
           roomState.hands = {};
           syncRoomState(roomState);
         } else {
@@ -3072,6 +3316,9 @@
           if (emoji) sendEmoji(emoji);
         };
       });
+
+      // 啟動時自動檢查清理過期房間
+      cleanExpiredRooms();
 
       // 自動檢查是否斷線重連
       if (currentRoomId && myPlayerName) {
