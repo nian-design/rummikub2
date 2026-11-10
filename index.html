@@ -435,6 +435,9 @@
       user-select: none;
       -webkit-user-select: none;
     }
+    #rack-tiles-shelf .rummi-tile {
+      touch-action: pan-x; /* 手牌區允許橫向原生滑動瀏覽 */
+    }
     @media (max-width: 640px) {
       .rummi-tile {
         width: 36px;
@@ -682,48 +685,180 @@
       transform: scale(1.05);
     }
 
+    /* 手牌區單排橫向滑動與右側提示 */
+    .rack-shelf-wrapper {
+      position: relative;
+      width: 100%;
+    }
     .rack-tiles-shelf {
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.45);
       border-radius: 8px;
-      padding: 10px 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 24px 10px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 7px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      min-height: 76px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(250, 204, 21, 0.4) transparent;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    .rack-tiles-shelf::-webkit-scrollbar {
+      height: 5px;
+    }
+    .rack-tiles-shelf::-webkit-scrollbar-thumb {
+      background: rgba(250, 204, 21, 0.35);
+      border-radius: 4px;
+    }
+    .rack-shelf-peek-hint {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 24px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      overflow-x: auto;
-      min-height: 74px;
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+      justify-content: center;
+      background: linear-gradient(to right, transparent, rgba(15, 23, 42, 0.88));
+      color: rgba(250, 204, 21, 0.85);
+      font-size: 1.25rem;
+      font-weight: 900;
+      pointer-events: none;
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+      animation: peekPulse 1.6s infinite ease-in-out;
+      user-select: none;
+    }
+    @keyframes peekPulse {
+      0%, 100% { opacity: 0.35; transform: translateX(0); }
+      50% { opacity: 0.95; transform: translateX(2px); }
     }
 
-    /* 快捷表情與短語列 */
-    .quick-chat-bar {
-      position: fixed;
-      right: 12px;
-      bottom: 188px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 24px;
-      padding: 6px 10px;
+    /* 置頂常駐高可視度倒數計時膠囊 */
+    .timer-capsule-bar {
       display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 2px 0 10px 0;
+      position: sticky;
+      top: 52px;
+      z-index: 25;
+      pointer-events: none;
+    }
+    .timer-capsule {
+      background: rgba(15, 23, 42, 0.94);
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(8px);
+      color: #f8fafc;
+      padding: 6px 20px;
+      border-radius: 9999px;
+      font-size: 0.94rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: auto;
+      letter-spacing: 0.3px;
+    }
+    .timer-capsule.my-turn {
+      border-color: #facc15;
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.4);
+    }
+    .timer-capsule.alert {
+      background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+      border-color: #fecaca !important;
+      color: #ffffff !important;
+      transform: scale(1.08);
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.95) !important;
+      animation: capsuleAlertPulse 0.75s infinite alternate ease-in-out;
+    }
+    @keyframes capsuleAlertPulse {
+      0% { transform: scale(1.03); box-shadow: 0 0 18px rgba(239, 68, 68, 0.65); }
+      100% { transform: scale(1.12); box-shadow: 0 0 36px rgba(239, 68, 68, 1); }
+    }
+    .capsule-sec {
+      font-size: 1.15rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #facc15;
+      font-weight: 900;
+    }
+    .timer-capsule.alert .capsule-sec {
+      color: #ffffff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+    }
+
+    /* 懸浮式表情按鈕與浮動選單 (完全不擠壓牌桌與手牌空間) */
+    .emoji-picker-anchor {
+      position: relative;
+      display: inline-flex;
+    }
+    .btn-emoji-trigger {
+      background: rgba(234, 179, 8, 0.18);
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      color: #fef08a;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-emoji-trigger:hover {
+      background: rgba(234, 179, 8, 0.32);
+      transform: translateY(-1px);
+    }
+    .emoji-popover-menu {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 0;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(250, 204, 21, 0.5);
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+      z-index: 65;
+      min-width: 270px;
+      animation: popIn 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    @media (max-width: 640px) {
+      .emoji-popover-menu {
+        left: auto;
+        right: -30px;
+      }
+    }
+    .emoji-popover-header {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .emoji-popover-items {
+      display: flex;
+      flex-wrap: wrap;
       gap: 6px;
-      z-index: 34;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
     .btn-chat-bubble {
       background: rgba(255, 255, 255, 0.1);
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: #ffffff;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.78rem;
-      font-weight: bold;
+      padding: 5px 9px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.15s;
     }
     .btn-chat-bubble:hover {
-      background: rgba(255, 255, 255, 0.25);
-      transform: scale(1.08);
+      background: rgba(250, 204, 21, 0.25);
+      border-color: #facc15;
+      color: #fef08a;
+      transform: scale(1.06);
     }
 
     /* ============================================================
@@ -933,6 +1068,15 @@
       <!-- 動態填入各玩家資訊卡 -->
     </div>
 
+    <!-- 置頂常駐高可視度倒數計時膠囊 -->
+    <div class="timer-capsule-bar">
+      <div id="turn-timer-capsule" class="timer-capsule">
+        <span class="capsule-icon">⏱</span>
+        <span id="capsule-turn-text">等待遊戲開始...</span>
+        <span id="capsule-seconds" class="capsule-sec"></span>
+      </div>
+    </div>
+
     <!-- 牌桌資訊與建立牌組按鈕 -->
     <div class="board-controls-bar">
       <div class="status-text" id="turn-status-banner">
@@ -956,15 +1100,6 @@
 
   </main>
 
-  <!-- 快捷表情/短語浮動按鈕列 -->
-  <div class="quick-chat-bar" id="quick-chat-bar">
-    <button class="btn-chat-bubble" data-emoji="👍">👍 讚</button>
-    <button class="btn-chat-bubble" data-emoji="😱">😱 天啊</button>
-    <button class="btn-chat-bubble" data-emoji="⚡ 快一點！">⚡ 快點</button>
-    <button class="btn-chat-bubble" data-emoji="🔥 好牌！">🔥 好牌</button>
-    <button class="btn-chat-bubble" data-emoji="🤔 思考中...">🤔 思考中</button>
-  </div>
-
   <!-- 底部手牌木架 -->
   <div class="player-rack-dock" id="player-rack-dock">
     <div class="rack-header">
@@ -974,6 +1109,24 @@
         </span>
         <button class="rack-btn-sort" id="btn-sort-num">777 依數字排序</button>
         <button class="rack-btn-sort" id="btn-sort-color">123 依顏色順子</button>
+
+        <!-- 懸浮式表情工具按鈕與浮動選單 (完全不擠壓牌桌空間) -->
+        <div class="emoji-picker-anchor" id="emoji-picker-anchor">
+          <button class="rack-btn-sort btn-emoji-trigger" id="btn-toggle-emoji" type="button" title="傳送快捷互動表情">
+            😊 互動表情
+          </button>
+          <div class="emoji-popover-menu" id="emoji-popover-menu" style="display:none;">
+            <div class="emoji-popover-header">傳送快捷表情/語音：</div>
+            <div class="emoji-popover-items">
+              <button class="btn-chat-bubble" data-emoji="👍">👍 讚</button>
+              <button class="btn-chat-bubble" data-emoji="😱">😱 天啊</button>
+              <button class="btn-chat-bubble" data-emoji="⚡ 快一點！">⚡ 快點</button>
+              <button class="btn-chat-bubble" data-emoji="🔥 好牌！">🔥 好牌</button>
+              <button class="btn-chat-bubble" data-emoji="🤔 思考中...">🤔 思考中</button>
+              <button class="btn-chat-bubble" data-emoji="🎉 謝謝大家">🎉 謝謝</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="rack-turn-controls">
         <button class="btn-turn-reset" id="btn-reset-turn" title="還原回合初手牌與牌桌" disabled>
@@ -985,8 +1138,12 @@
       </div>
     </div>
 
-    <div class="rack-tiles-shelf" id="rack-tiles-shelf">
-      <!-- 玩家自己的手牌磚渲染於此 -->
+    <!-- 單排左右滑動手牌區 (帶右側邊緣露出指示) -->
+    <div class="rack-shelf-wrapper">
+      <div class="rack-tiles-shelf" id="rack-tiles-shelf">
+        <!-- 玩家自己的手牌磚渲染於此 -->
+      </div>
+      <div class="rack-shelf-peek-hint" title="可向右滑動查看更多手牌">›</div>
     </div>
   </div>
 
@@ -1136,6 +1293,7 @@
   appId: "1:959563031284:web:ecfbca1c8c058c7c8b74a1",
   measurementId: "G-BHQBQJKFMZ"
 };
+
 
     // 檢查是否已設定真實 Firebase
     const isFirebaseConfigured = Boolean(
@@ -1934,13 +2092,73 @@
       renderGame();
     }
 
-    // 牌組自動整齊排序 (順子或同數字)
+    // 牌組自動整齊排序 (順子鬼牌自動補缺口 / 群組自然排列)
     function autoSortSet(setId) {
       if (!isMyTurn() || !localBoard[setId]) return;
       sound.playClick();
       const set = localBoard[setId];
-      // 優先按照數字由小到大排
-      set.sort((a, b) => (a.number || 99) - (b.number || 99));
+      if (!set || set.length <= 1) return;
+
+      const jokers = set.filter(t => t.color === "joker" || t.number === 0);
+      const nonJokers = set.filter(t => t.color !== "joker" && t.number !== 0);
+
+      // 全部都是鬼牌或沒有鬼牌
+      if (nonJokers.length === 0) {
+        renderGame();
+        return;
+      }
+      if (jokers.length === 0) {
+        set.sort((a, b) => (a.number || 0) - (b.number || 0));
+        renderGame();
+        return;
+      }
+
+      // 判斷是否為同色順子（Run）候選：同色且數字不重複
+      const targetColor = nonJokers[0].color;
+      const allSameColor = nonJokers.every(t => t.color === targetColor);
+      const sortedNonJokers = [...nonJokers].sort((a, b) => a.number - b.number);
+      const hasDuplicate = sortedNonJokers.some((t, i) => i > 0 && t.number === sortedNonJokers[i - 1].number);
+
+      if (allSameColor && !hasDuplicate) {
+        // --- 順子（Run）鬼牌精準補缺演算法 ---
+        const availableJokers = [...jokers];
+        const result = [sortedNonJokers[0]];
+
+        // 依序檢查每個相鄰數字間的空檔 (Gap)
+        for (let i = 1; i < sortedNonJokers.length; i++) {
+          const prevTile = sortedNonJokers[i - 1];
+          const currTile = sortedNonJokers[i];
+          const gap = currTile.number - prevTile.number - 1;
+
+          // 若有空缺，以鬼牌依序補入
+          if (gap > 0) {
+            for (let g = 0; g < gap && availableJokers.length > 0; g++) {
+              result.push(availableJokers.shift());
+            }
+          }
+          result.push(currTile);
+        }
+
+        // 若填補完內部空缺後仍有多餘鬼牌
+        while (availableJokers.length > 0) {
+          const joker = availableJokers.shift();
+          const maxNum = sortedNonJokers[sortedNonJokers.length - 1].number;
+          // 若最大數字已達 13（如：藍12、藍13、鬼牌）：自動置於最前端；否則優先置於末端延伸
+          if (maxNum === 13) {
+            result.unshift(joker);
+          } else {
+            result.push(joker);
+          }
+        }
+
+        localBoard[setId] = result;
+      } else {
+        // --- 群組（Group）或同數字不同色排法 ---
+        // 數字牌在前依數字由小到大排列，鬼牌放置於末端
+        sortedNonJokers.sort((a, b) => (a.number || 0) - (b.number || 0));
+        localBoard[setId] = [...sortedNonJokers, ...jokers];
+      }
+
       renderGame();
     }
 
@@ -2469,6 +2687,12 @@
           <span>⏳ 等待 <span class="highlight-val">${turnName}</span> 出牌中...</span>
         `;
       }
+
+      // 更新置頂常駐高可視度倒數計時膠囊
+      const limit = roomState.turnTimeLimit || 60;
+      const elapsed = Math.floor((Date.now() - (roomState.turnStartTime || Date.now())) / 1000);
+      const remaining = Math.max(0, limit - elapsed);
+      updateTimerCapsule(remaining, limit);
     }
 
     // 渲染等待室
@@ -2795,7 +3019,7 @@
       renderGame();
     }
 
-    // 為牌磚綁定 Pointer Events (跨裝置相容觸控與滑鼠，支援點擊選取與拖曳放置雙模式)
+    // 為牌磚綁定 Pointer Events (跨裝置相容觸控與滑鼠，支援手牌橫向滑動與向上拖曳出牌防衝突)
     function setupTilePointerEvents(tileEl, sourceData) {
       tileEl.addEventListener("pointerdown", (e) => {
         // 只響應滑鼠主鍵或觸控
@@ -2818,7 +3042,9 @@
 
         const startX = e.clientX;
         const startY = e.clientY;
-        let hasMoved = false;
+        let isDragging = false;
+        let gestureDecided = false;
+        let isHorizontalScroll = false;
         let ghostEl = null;
 
         // 判斷是否為多選批次拖曳
@@ -2836,21 +3062,48 @@
         }
 
         const onPointerMove = (moveEvt) => {
+          if (isHorizontalScroll) return; // 判定為手牌橫向捲動時，不觸發拖曳
+
           const dx = moveEvt.clientX - startX;
           const dy = moveEvt.clientY - startY;
+          const absDx = Math.abs(dx);
+          const absDy = Math.abs(dy);
           const dist = Math.hypot(dx, dy);
 
-          // 位移超過 5px 判定進入拖曳模式
-          if (!hasMoved && dist >= 5) {
-            hasMoved = true;
-            ghostEl = createDragGhost(sourceData.tile, draggedTiles.length);
-            ghostEl.style.left = `${moveEvt.clientX}px`;
-            ghostEl.style.top = `${moveEvt.clientY}px`;
-            document.body.appendChild(ghostEl);
-            tileEl.classList.add("dragging-origin");
+          if (!gestureDecided) {
+            if (isHand && moveEvt.pointerType === "touch") {
+              // 手機觸控手牌區：方向分流判定
+              if (dist >= 6) {
+                gestureDecided = true;
+                if (dy < -10 && absDy > absDx) {
+                  // 垂直向上拉動：啟動拖曳出牌
+                  isDragging = true;
+                  ghostEl = createDragGhost(sourceData.tile, draggedTiles.length);
+                  ghostEl.style.left = `${moveEvt.clientX}px`;
+                  ghostEl.style.top = `${moveEvt.clientY}px`;
+                  document.body.appendChild(ghostEl);
+                  tileEl.classList.add("dragging-origin");
+                } else {
+                  // 水平左右滑動 (|deltaX| > |deltaY| 或未達垂直拉動門檻)：交給手牌木架原生橫向捲動
+                  isHorizontalScroll = true;
+                  return;
+                }
+              }
+            } else {
+              // 電腦滑鼠或桌面牌磚：移動超過 5px 即判定為拖曳
+              if (dist >= 5) {
+                gestureDecided = true;
+                isDragging = true;
+                ghostEl = createDragGhost(sourceData.tile, draggedTiles.length);
+                ghostEl.style.left = `${moveEvt.clientX}px`;
+                ghostEl.style.top = `${moveEvt.clientY}px`;
+                document.body.appendChild(ghostEl);
+                tileEl.classList.add("dragging-origin");
+              }
+            }
           }
 
-          if (hasMoved && ghostEl) {
+          if (isDragging && ghostEl) {
             moveEvt.preventDefault();
             ghostEl.style.left = `${moveEvt.clientX}px`;
             ghostEl.style.top = `${moveEvt.clientY}px`;
@@ -2871,18 +3124,21 @@
             ghostEl = null;
           }
 
-          if (!hasMoved) {
-            // 位移未達 5px：維持原本點擊選取 (Click Selection)
-            if (isMyTurn()) {
-              if (isHand) {
-                toggleSelectHandTile(sourceData.tile.id);
-              } else if (sourceData.type === "board") {
-                toggleSelectBoardTile(sourceData.setId, sourceData.tileIndex, sourceData.tile);
-              }
-            }
-          } else {
+          if (isDragging) {
             // 執行拖曳放置 (Drag & Drop)
             handleTileDrop(upEvt.clientX, upEvt.clientY, sourceData, draggedTiles);
+          } else if (!isHorizontalScroll) {
+            // 輕點選取判定 (位移小於 5px)
+            const finalDist = Math.hypot(upEvt.clientX - startX, upEvt.clientY - startY);
+            if (finalDist < 6) {
+              if (isMyTurn()) {
+                if (isHand) {
+                  toggleSelectHandTile(sourceData.tile.id);
+                } else if (sourceData.type === "board") {
+                  toggleSelectBoardTile(sourceData.setId, sourceData.tileIndex, sourceData.tile);
+                }
+              }
+            }
           }
         };
 
@@ -3083,6 +3339,36 @@
       renderMyHandRack();
     }
 
+    // 更新置頂常駐高可視度倒數計時膠囊
+    function updateTimerCapsule(remaining, limit) {
+      const capsule = document.getElementById("turn-timer-capsule");
+      const textEl = document.getElementById("capsule-turn-text");
+      const secEl = document.getElementById("capsule-seconds");
+      if (!capsule || !textEl || !secEl) return;
+
+      if (!roomState || roomState.status !== "playing") {
+        capsule.className = "timer-capsule";
+        textEl.innerText = "等待遊戲開始...";
+        secEl.innerText = "";
+        return;
+      }
+
+      const currPid = roomState.currentTurnPlayerId;
+      const currP = roomState.players && roomState.players[currPid];
+      const name = currP ? currP.name : "其他玩家";
+      const isMe = currPid === myPlayerId;
+
+      if (remaining <= 10 && remaining > 0) {
+        capsule.className = "timer-capsule alert";
+        textEl.innerText = isMe ? "⚠️ 剩餘時間！輪到 你 (請盡速出牌)：" : `⚠️ 即將超時！輪到 ${name}：`;
+        secEl.innerText = `${remaining} 秒`;
+      } else {
+        capsule.className = isMe ? "timer-capsule my-turn" : "timer-capsule";
+        textEl.innerText = isMe ? "⏱ 輪到 你 (請出牌)：" : `⏱ 輪到 ${name}：`;
+        secEl.innerText = `${remaining} 秒`;
+      }
+    }
+
     // ==========================================
     // 計時器排程與醒目最後 10 秒倒數
     // ==========================================
@@ -3092,6 +3378,7 @@
       timerInterval = setInterval(() => {
         if (!roomState || roomState.status !== "playing") {
           document.getElementById("big-countdown-overlay").style.display = "none";
+          updateTimerCapsule(0, 0);
           return;
         }
 
@@ -3099,6 +3386,9 @@
         const limit = roomState.turnTimeLimit || 60;
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         const remaining = Math.max(0, limit - elapsed);
+
+        // 同步置頂常駐倒數計時膠囊
+        updateTimerCapsule(remaining, limit);
 
         // 最後 10 秒醒目中央倒數與滴答聲
         const bigOverlay = document.getElementById("big-countdown-overlay");
@@ -3309,11 +3599,34 @@
         };
       }
 
-      // 快捷表情短語按鈕
+      // 懸浮式快捷表情按鈕與選單
+      const emojiToggleBtn = document.getElementById("btn-toggle-emoji");
+      const emojiPopover = document.getElementById("emoji-popover-menu");
+      if (emojiToggleBtn && emojiPopover) {
+        emojiToggleBtn.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = emojiPopover.style.display !== "none";
+          emojiPopover.style.display = isOpen ? "none" : "block";
+        };
+
+        // 點擊畫面任意其他區域自動收合表情選單
+        document.addEventListener("click", (e) => {
+          const anchor = document.getElementById("emoji-picker-anchor");
+          if (anchor && !anchor.contains(e.target)) {
+            emojiPopover.style.display = "none";
+          }
+        });
+      }
+
+      // 快捷表情短語按鈕 (點擊發送並自動收合選單)
       document.querySelectorAll(".btn-chat-bubble").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
           const emoji = btn.getAttribute("data-emoji");
-          if (emoji) sendEmoji(emoji);
+          if (emoji) {
+            sendEmoji(emoji);
+            if (emojiPopover) emojiPopover.style.display = "none";
+          }
         };
       });
 
