@@ -23,9 +23,9 @@
       --tile-ivory: #fffdfa;
       --tile-shadow: rgba(0, 0, 0, 0.35);
       --tile-color-black: #18181b;
-      --tile-color-red: #dc2626;
+      --tile-color-red: #C62828;
       --tile-color-blue: #2563eb;
-      --tile-color-orange: #ea580c;
+      --tile-color-orange: #F59E0B;
     }
 
     * {
@@ -44,6 +44,15 @@
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
+    }
+
+    /* 根視窗容器 (電腦版透明無影響；手機直向時強制旋轉為橫向) */
+    #app-viewport-root {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
     }
 
     /* 頂部導航列 */
@@ -121,6 +130,139 @@
       background: rgba(220, 38, 38, 0.55);
       color: #ffffff;
       border-color: #ef4444;
+    }
+
+    /* 語音麥克風切換按鈕 (預設靜音關閉，開麥時亮起綠色提示) */
+    .btn-icon.btn-mic-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #cbd5e1;
+      font-weight: 700;
+    }
+    .btn-icon.btn-mic-toggle.mic-on {
+      background: rgba(22, 163, 74, 0.35);
+      border-color: #4ade80;
+      color: #dcfce7;
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.45);
+    }
+    .btn-icon.btn-mic-toggle.mic-on:hover {
+      background: rgba(22, 163, 74, 0.52);
+    }
+
+    /* 玩家麥克風狀態與單獨靜音控制 */
+    .player-voice-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .mic-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      padding: 1px 4px;
+      border-radius: 5px;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      line-height: 1.1;
+    }
+    .mic-status-badge.mic-live {
+      background: rgba(22, 163, 74, 0.28);
+      border-color: rgba(74, 222, 128, 0.65);
+      color: #86efac;
+    }
+    .btn-peer-mute {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #e2e8f0;
+      border-radius: 8px;
+      min-width: 36px;
+      min-height: 36px;
+      padding: 4px;
+      font-size: 0.9rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+    .btn-peer-mute:hover {
+      background: rgba(255, 255, 255, 0.24);
+    }
+    .btn-peer-mute.is-muted {
+      background: rgba(220, 38, 38, 0.32);
+      border-color: #f87171;
+      color: #fecaca;
+    }
+
+    /* 正在說話 (Voice Activity Detection) 綠色發光呼吸燈效果 */
+    @keyframes speakingGlow {
+      0% {
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.85), 0 0 12px rgba(34, 197, 94, 0.55);
+      }
+      100% {
+        box-shadow: 0 0 0 4px rgba(74, 222, 128, 1), 0 0 24px rgba(74, 222, 128, 0.95);
+      }
+    }
+    .player-card.is-speaking {
+      border-color: #4ade80 !important;
+      animation: speakingGlow 0.95s ease-in-out infinite alternate;
+    }
+    .player-card.is-speaking .player-avatar {
+      border-color: #4ade80 !important;
+      box-shadow: 0 0 14px rgba(74, 222, 128, 0.95);
+    }
+    .player-card.is-speaking .player-name {
+      color: #86efac;
+      text-shadow: 0 0 8px rgba(74, 222, 128, 0.75);
+    }
+    .lobby-player-item {
+      border: 2px solid transparent;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .lobby-player-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(51, 65, 85, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      font-size: 0.95rem;
+      flex-shrink: 0;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .lobby-player-item.is-speaking {
+      border-color: #4ade80 !important;
+      background: rgba(22, 163, 74, 0.18);
+      animation: speakingGlow 0.95s ease-in-out infinite alternate;
+    }
+    .lobby-player-item.is-speaking .lobby-player-avatar {
+      border-color: #4ade80 !important;
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.95);
+    }
+    .lobby-player-item.is-speaking strong {
+      color: #86efac;
+      text-shadow: 0 0 8px rgba(74, 222, 128, 0.75);
+    }
+    .waiting-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .waiting-title-bar .modal-title {
+      margin-bottom: 0;
     }
 
     /* 頂部通知告示牌 */
@@ -318,18 +460,31 @@
       filter: grayscale(0.8);
     }
 
-    /* 牌桌牌組展示區 */
+    /* 牌桌牌組展示區 (固定牌卡尺寸 + 穩定網格/捲動排版，杜絕自動縮放與晃動) */
     .felt-board {
       min-height: 240px;
+      max-height: calc(100vh - 340px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
       background: rgba(0, 0, 0, 0.2);
       border: 2px dashed rgba(255, 255, 255, 0.15);
       border-radius: 16px;
       padding: 16px;
       display: flex;
       flex-wrap: wrap;
+      align-items: flex-start;
       align-content: flex-start;
-      gap: 16px;
+      gap: 14px;
       position: relative;
+      transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .felt-board::-webkit-scrollbar {
+      width: 6px;
+    }
+    .felt-board::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 4px;
     }
     .felt-empty-hint {
       position: absolute;
@@ -342,25 +497,28 @@
       text-align: center;
     }
 
-    /* 單一牌組卡片 */
+    /* 單一牌組卡片 (固定 2px 邊框寬度與穩定最小寬度，防止選取或懸停造成抖動) */
     .tile-set-card {
       background: rgba(15, 23, 42, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 2px solid rgba(255, 255, 255, 0.18);
       border-radius: 12px;
       padding: 8px 10px;
+      min-width: 176px;
+      max-width: 100%;
       display: flex;
       flex-direction: column;
       gap: 6px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
       position: relative;
-      transition: border-color 0.2s;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      flex-shrink: 0;
     }
     .tile-set-card.invalid-set {
-      border: 2px solid #ef4444;
-      background: rgba(127, 29, 29, 0.3);
+      border-color: #ef4444;
+      background: rgba(127, 29, 29, 0.32);
     }
     .tile-set-card.valid-set {
-      border: 1px solid rgba(74, 222, 128, 0.4);
+      border-color: rgba(74, 222, 128, 0.45);
     }
     .tile-set-header {
       display: flex;
@@ -377,6 +535,7 @@
       padding: 1px 6px;
       border-radius: 4px;
       font-size: 0.68rem;
+      white-space: nowrap;
     }
     .set-tag.run { background: #0369a1; color: #bae6fd; }
     .set-tag.group { background: #7c2d12; color: #fed7aa; }
@@ -385,14 +544,19 @@
     .tile-set-tiles {
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
       gap: 4px;
-      min-height: 48px;
+      min-height: 60px;
+      padding: 2px 0;
+      scrollbar-width: thin;
     }
     .tile-set-actions {
       display: flex;
       gap: 4px;
       justify-content: flex-end;
+      min-height: 24px;
+      align-items: center;
     }
     .btn-set-sub {
       background: rgba(255, 255, 255, 0.12);
@@ -402,7 +566,8 @@
       border-radius: 6px;
       font-size: 0.7rem;
       cursor: pointer;
-      transition: all 0.2s;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, opacity 0.15s ease;
     }
     .btn-set-sub:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.25);
@@ -413,14 +578,20 @@
       color: #ffffff;
       font-weight: bold;
     }
+    .btn-set-sub.btn-add-hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
 
     /* ============================================================
-       實體麻將質感牌磚 (Mahjong-style Tiles)
+       實體麻將質感牌磚 (Mahjong-style Tiles - 固定尺寸與高區分度色票)
        ============================================================ */
     .rummi-tile {
       width: 40px;
       height: 56px;
+      flex: 0 0 40px;
       background: linear-gradient(180deg, #ffffff 0%, #fbfaf7 80%, #eae5d9 100%);
+      border: 2px solid #cbd5e1;
       border-radius: 7px;
       box-shadow: 0 3px 0 #bbb4a2, 0 5px 6px rgba(0, 0, 0, 0.4);
       display: flex;
@@ -435,22 +606,20 @@
       user-select: none;
       -webkit-user-select: none;
     }
+    .rummi-tile.tile-color-black { border-color: #3f3f46; }
+    .rummi-tile.tile-color-red { border-color: #C62828; }
+    .rummi-tile.tile-color-blue { border-color: #2563eb; }
+    .rummi-tile.tile-color-orange { border-color: #F59E0B; }
+    .rummi-tile.tile-color-joker { border-color: #7e22ce; }
+
     #rack-tiles-shelf .rummi-tile {
       touch-action: pan-x; /* 手牌區允許橫向原生滑動瀏覽 */
     }
-    @media (max-width: 640px) {
-      .rummi-tile {
-        width: 36px;
-        height: 50px;
-      }
-    }
     .rummi-tile:active {
       cursor: grabbing;
-      transform: translateY(2px);
-      box-shadow: 0 1px 0 #bbb4a2, 0 2px 3px rgba(0, 0, 0, 0.4);
     }
     .rummi-tile.selected {
-      transform: translateY(-8px) scale(1.05);
+      transform: translateY(-6px);
       outline: 3px solid #facc15;
       box-shadow: 0 8px 15px rgba(250, 204, 21, 0.5), 0 3px 0 #bbb4a2;
       z-index: 20;
@@ -492,12 +661,11 @@
       50% { transform: scale(1.1); }
     }
 
-    /* 拖曳目標高亮懸停反饋 (Drop Zone Hover) */
+    /* 拖曳目標高亮懸停反饋 (零縮放、零版面抖動) */
     .tile-set-card.drop-hover {
-      outline: 3px solid #38bdf8 !important;
-      box-shadow: 0 0 22px rgba(56, 189, 248, 0.75) !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.7), 0 0 20px rgba(56, 189, 248, 0.6) !important;
       background: rgba(30, 58, 138, 0.55) !important;
-      transform: scale(1.02);
     }
     .felt-board.drop-hover-board {
       border-color: #facc15 !important;
@@ -510,31 +678,35 @@
     }
 
     .tile-num {
-      font-size: 1.45rem;
+      font-size: 1.4rem;
       font-weight: 900;
       line-height: 1;
       font-family: Impact, "Arial Black", sans-serif;
     }
-    @media (max-width: 640px) {
-      .tile-num {
-        font-size: 1.25rem;
-      }
-    }
     .tile-num.color-black { color: var(--tile-color-black); }
-    .tile-num.color-red { color: var(--tile-color-red); }
+    .tile-num.color-red {
+      color: var(--tile-color-red);
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+    }
     .tile-num.color-blue { color: var(--tile-color-blue); }
-    .tile-num.color-orange { color: var(--tile-color-orange); }
+    .tile-num.color-orange {
+      color: var(--tile-color-orange);
+      text-shadow: 0 1px 0 rgba(120, 53, 15, 0.35), 0 0 1px rgba(146, 64, 14, 0.45);
+    }
 
     .tile-dot {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       margin-top: 3px;
     }
     .tile-dot.color-black { background: var(--tile-color-black); }
     .tile-dot.color-red { background: var(--tile-color-red); }
     .tile-dot.color-blue { background: var(--tile-color-blue); }
-    .tile-dot.color-orange { background: var(--tile-color-orange); }
+    .tile-dot.color-orange {
+      background: var(--tile-color-orange);
+      box-shadow: 0 0 0 1px rgba(180, 83, 9, 0.4);
+    }
 
     /* 百搭鬼牌 Joker */
     .tile-joker {
@@ -1035,9 +1207,219 @@
       border-bottom: 1px solid rgba(255,255,255,0.06);
       font-size: 0.9rem;
     }
+
+    /* ============================================================
+       手機版強制橫向模式 (電腦版大螢幕完全不受影響)
+       ============================================================ */
+    @media screen and (max-width: 767px) and (orientation: portrait),
+           screen and (max-width: 920px) and (orientation: portrait) and (pointer: coarse) {
+      html, body {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+      }
+      #app-viewport-root {
+        position: fixed;
+        top: 0;
+        left: 100vw;
+        width: 100vh;
+        height: 100vw;
+        min-height: 0;
+        transform-origin: top left;
+        transform: rotate(90deg);
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: radial-gradient(circle at 50% 35%, var(--felt-green-light) 0%, var(--felt-green-mid) 50%, var(--felt-green-dark) 100%);
+      }
+      #rack-tiles-shelf .rummi-tile {
+        touch-action: none; /* 旋轉後由程式精準區分橫向捲動與向上拖曳 */
+      }
+      .felt-board {
+        touch-action: none; /* 旋轉後由程式精準驅動公桌捲動 */
+      }
+    }
+
+    /* 手機橫向緊湊排版 (包含直向強制旋轉與原生橫向手機，公桌固定 32x46px 確保可看清 3~4 排) */
+    @media screen and (max-width: 767px) and (orientation: portrait),
+           screen and (max-width: 920px) and (orientation: portrait) and (pointer: coarse),
+           screen and (max-height: 500px) and (orientation: landscape) {
+      header {
+        padding: 4px 10px;
+      }
+      .brand-logo {
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+      }
+      .brand-title {
+        font-size: 0.88rem;
+      }
+      .brand-sub {
+        font-size: 0.68rem;
+      }
+      .btn-icon {
+        padding: 4px 8px;
+        font-size: 0.74rem;
+      }
+      #notice-bar {
+        padding: 2px 10px;
+        font-size: 0.7rem;
+      }
+      #game-container {
+        padding: 4px 8px 108px 8px;
+      }
+      .players-strip {
+        padding: 22px 4px 4px 4px;
+        gap: 6px;
+      }
+      .player-card {
+        min-width: 140px;
+        padding: 4px 8px;
+        gap: 6px;
+      }
+      .player-avatar {
+        width: 26px;
+        height: 26px;
+        font-size: 0.78rem;
+      }
+      .player-name {
+        font-size: 0.74rem;
+      }
+      .player-sub {
+        font-size: 0.66rem;
+      }
+      .timer-capsule-bar {
+        margin: 1px 0 4px 0;
+        top: 34px;
+      }
+      .timer-capsule {
+        padding: 3px 12px;
+        font-size: 0.78rem;
+      }
+      .capsule-sec {
+        font-size: 0.94rem;
+      }
+      .board-controls-bar {
+        padding: 3px 10px;
+        margin-bottom: 5px;
+      }
+      .status-text {
+        font-size: 0.74rem;
+      }
+      .btn-action-primary {
+        padding: 4px 10px;
+        font-size: 0.76rem;
+      }
+      .felt-board {
+        min-height: 150px;
+        max-height: 62vh;
+        overflow-y: auto;
+        padding: 6px;
+        gap: 6px;
+      }
+      .tile-set-card {
+        min-width: 118px;
+        padding: 3px 5px;
+        gap: 2px;
+        border-radius: 9px;
+      }
+      .tile-set-header {
+        font-size: 0.62rem;
+        padding-bottom: 2px;
+        gap: 4px;
+      }
+      .set-tag {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+      }
+      .tile-set-tiles {
+        min-height: 48px;
+        gap: 3px;
+        padding: 1px 0;
+      }
+      .tile-set-actions {
+        min-height: 20px;
+      }
+      .btn-set-sub {
+        padding: 2px 6px;
+        font-size: 0.64rem;
+      }
+      /* 手機橫向公桌固定牌卡尺寸：約寬 32px、高 46px */
+      .felt-board .rummi-tile {
+        width: 32px;
+        height: 46px;
+        flex: 0 0 32px;
+        border-radius: 5px;
+      }
+      .felt-board .tile-num {
+        font-size: 1.04rem;
+      }
+      .felt-board .tile-dot {
+        width: 4px;
+        height: 4px;
+        margin-top: 2px;
+      }
+      .felt-board .tile-joker-icon {
+        font-size: 1.02rem;
+      }
+      /* 手機橫向手牌區牌磚保持清晰好點好拖 */
+      #rack-tiles-shelf .rummi-tile {
+        width: 36px;
+        height: 50px;
+        flex: 0 0 36px;
+      }
+      #rack-tiles-shelf .tile-num {
+        font-size: 1.18rem;
+      }
+      #rack-tiles-shelf .tile-joker-icon {
+        font-size: 1.15rem;
+      }
+      .player-rack-dock {
+        padding: 5px 8px 6px 8px;
+      }
+      .rack-header {
+        margin-bottom: 4px;
+        gap: 4px;
+      }
+      .rack-btn-sort {
+        padding: 3px 7px;
+        font-size: 0.72rem;
+      }
+      .btn-turn-reset, .btn-turn-main {
+        padding: 4px 10px;
+        font-size: 0.76rem;
+      }
+      .rack-tiles-shelf {
+        min-height: 58px;
+        padding: 5px 22px 5px 6px;
+        gap: 5px;
+      }
+      .modal-card {
+        max-height: 92%;
+        overflow-y: auto;
+        padding: 14px 18px;
+      }
+      .modal-title {
+        font-size: 1.05rem;
+        margin-bottom: 8px;
+      }
+      .form-group {
+        margin-bottom: 10px;
+      }
+      .form-input, .form-select {
+        padding: 7px 10px;
+        font-size: 0.9rem;
+      }
+      .modal-footer {
+        margin-top: 12px;
+      }
+    }
   </style>
 </head>
 <body>
+<div id="app-viewport-root">
 
   <!-- 頂部 Header -->
   <header>
@@ -1049,6 +1431,7 @@
       </div>
     </div>
     <div class="header-actions">
+      <button class="btn-icon btn-mic-toggle" id="btn-mic-toggle" style="display:none;" title="切換麥克風開關">🔇 麥克風關</button>
       <button class="btn-icon" id="btn-sound-toggle" title="切換音效">🔊 音效開</button>
       <button class="btn-icon" id="btn-show-rules" title="遊戲規則">📖 規則說明</button>
       <button class="btn-icon btn-leave" id="btn-leave-room" style="display:none;" title="離開房間">🚪 離開房間</button>
@@ -1176,7 +1559,10 @@
   <!-- 彈窗 2：房間等待室 (Host 設定開局) -->
   <div class="modal-backdrop" id="modal-waiting" style="display:none;">
     <div class="modal-card">
-      <div class="modal-title">⏳ 房間等待室</div>
+      <div class="waiting-title-bar">
+        <div class="modal-title">⏳ 房間等待室</div>
+        <button class="btn-icon btn-mic-toggle" id="btn-waiting-mic-toggle" title="切換麥克風開關">🔇 麥克風關</button>
+      </div>
       <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:12px;">
         房號：<span id="waiting-room-id" style="color:#facc15; font-weight:bold; font-size:1.1rem;"></span>
       </p>
@@ -1273,6 +1659,24 @@
     </div>
   </div>
 
+  <!-- 彈窗 5：離開房間防誤觸確認視窗 (支援電腦版、手機強制橫向與內嵌視窗) -->
+  <div class="modal-backdrop" id="modal-confirm-leave" style="display:none; z-index:3000;">
+    <div class="modal-card" style="max-width:400px; border:2px solid rgba(248, 113, 113, 0.55); box-shadow:0 18px 40px rgba(0, 0, 0, 0.65);">
+      <div class="modal-title" id="confirm-leave-title" style="color:#fca5a5;">⚠️ 確定要中途離開對局嗎？</div>
+      <div id="confirm-leave-desc" style="font-size:0.9rem; color:#e2e8f0; line-height:1.65; margin-bottom:18px;">
+        目前遊戲仍在進行中！若現在離開，您的手牌將自動洗回公共牌庫，且無法再回到本局對戰。
+      </div>
+      <div class="modal-footer" style="margin-top:8px; display:flex; gap:10px;">
+        <button class="btn-primary" id="btn-confirm-leave-cancel" style="flex:1.25;">繼續遊戲（取消）</button>
+        <button class="btn-primary" id="btn-confirm-leave-ok" style="flex:1; background:linear-gradient(135deg, #dc2626, #991b1b); color:#ffffff;">確定退出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WebRTC 遠端語音播放容器 -->
+  <div id="voice-audio-container" style="display:none;" aria-hidden="true"></div>
+</div><!-- /#app-viewport-root -->
+
   <!-- ============================================================
        主要程式邏輯 JavaScript
        ============================================================ -->
@@ -1284,16 +1688,14 @@
     // 將您的 Firebase 網頁設定貼在下方物件中即可線上多人連線！
     // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyA4g8uOUQzsl4SoQNnSixIR5OkKmR4nbCE",
-  authDomain: "nian-808a9.firebaseapp.com",
-  databaseURL: "https://nian-808a9-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nian-808a9",
-  storageBucket: "nian-808a9.firebasestorage.app",
-  messagingSenderId: "959563031284",
-  appId: "1:959563031284:web:ecfbca1c8c058c7c8b74a1",
-  measurementId: "G-BHQBQJKFMZ"
-};
-
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
     // 檢查是否已設定真實 Firebase
     const isFirebaseConfigured = Boolean(
@@ -1462,6 +1864,746 @@
     const sound = new SoundEngine();
 
     // ==========================================
+    // 同房間即時麥克風語音對話模組 (WebRTC P2P Mesh + VAD)
+    // ==========================================
+    class VoiceChatManager {
+      constructor() {
+        this.roomId = "";
+        this.active = false;
+        this.micEnabled = false;
+        this.micPermissionDenied = false;
+        this.localStream = null;
+        this.peers = new Map();          // peerId -> { pc, polite, makingOffer, ignoreOffer, pendingCandidates, remoteStream, audioTransceiver }
+        this.remoteAudioEls = new Map(); // peerId -> HTMLAudioElement
+        this.mutedPeers = new Set();     // 本地單獨靜音的遠端玩家 ID
+        this.remoteMicStatus = new Map();// peerId -> boolean (對方的麥克風是否開啟)
+        this.speakingPeers = new Set();  // 目前正在說話的玩家 ID (包含自己與遠端)
+        this.speakingHoldUntil = new Map();
+        this.analysers = new Map();      // playerId -> { source, analyser, data }
+        this.audioCtx = null;
+        this.vadInterval = null;
+        this.signalRef = null;
+        this.signalHandler = null;
+        this.rtcChannel = null;
+        this.customSignalingAdapter = null; // 預留 WebSocket / 自訂伺服器 Signaling 轉發接口
+        this.iceServers = [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun2.l.google.com:19302" }
+        ];
+      }
+
+      // 預留外部連線模組接口 (可抽換為 WebSocket / Socket.IO / MQTT)
+      setSignalingAdapter(adapter) {
+        this.customSignalingAdapter = adapter || null;
+      }
+
+      isSupported() {
+        return typeof window.RTCPeerConnection !== "undefined";
+      }
+
+      ensureAudioContext() {
+        try {
+          if (!this.audioCtx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.audioCtx = new AudioCtx();
+          }
+          if (this.audioCtx && this.audioCtx.state === "suspended") {
+            this.audioCtx.resume().catch(() => {});
+          }
+        } catch (e) {}
+      }
+
+      unlockRemoteAudio() {
+        this.ensureAudioContext();
+        this.remoteAudioEls.forEach((audioEl, peerId) => {
+          if (audioEl && !this.mutedPeers.has(peerId)) {
+            audioEl.play().catch(() => {});
+          }
+        });
+      }
+
+      // 進入房間時綁定語音生命週期 (等待室 -> 遊戲中 -> 結算保持連線不中斷)
+      joinRoom(roomId) {
+        if (!roomId) return;
+        if (this.active && this.roomId === roomId) {
+          this.updateMicButtonsUI();
+          return;
+        }
+        if (this.active && this.roomId !== roomId) {
+          this.leaveRoom();
+        }
+
+        this.roomId = roomId;
+        this.active = true;
+        this.joinedAt = Date.now() - 5000;
+        this.micEnabled = false;
+        this.micPermissionDenied = false;
+
+        if (!this.isSupported()) {
+          this.updateMicButtonsUI();
+          return;
+        }
+
+        // 建立 Signaling 通道 (Firebase Realtime Database 優先，否則使用本地 BroadcastChannel)
+        if (database) {
+          this.signalRef = database.ref(`rtc_signals/${roomId}/${myPlayerId}`);
+          try {
+            this.signalRef.onDisconnect().remove();
+          } catch (e) {}
+          // 同步監聽新信令 (不主動 remove 整個節點，避免清掉剛送達的 Offer；改以時間戳過濾過期舊信令)
+          this.signalHandler = (snap) => {
+            const msg = snap.val();
+            snap.ref.remove().catch(() => {});
+            if (msg) this.handleSignal(msg);
+          };
+          this.signalRef.on("child_added", this.signalHandler);
+        } else if (typeof BroadcastChannel !== "undefined") {
+          this.rtcChannel = new BroadcastChannel("rummikub_rtc_sync");
+          this.rtcChannel.onmessage = (event) => {
+            const msg = event.data;
+            if (!msg || !this.active) return;
+            if (msg.roomId === this.roomId && msg.to === myPlayerId) {
+              this.handleSignal(msg);
+            }
+          };
+        }
+
+        this.startVadLoop();
+        this.updateMicButtonsUI();
+      }
+
+      // 根據房間玩家名單同步建立/清理 WebRTC P2P Mesh 連線
+      syncPeers(playersMap) {
+        if (!this.active || !this.roomId || !this.isSupported()) return;
+        const players = playersMap || {};
+        const remoteIds = Object.keys(players).filter(pid => pid !== myPlayerId && !pid.startsWith("bot_"));
+        const remoteIdSet = new Set(remoteIds);
+
+        // 同步各玩家已知的麥克風狀態
+        remoteIds.forEach(pid => {
+          const p = players[pid];
+          if (p && typeof p.micOn === "boolean" && !this.remoteMicStatus.has(pid)) {
+            this.remoteMicStatus.set(pid, p.micOn);
+          }
+        });
+
+        // 清理已離開房間的 Peer 連線
+        Array.from(this.peers.keys()).forEach(existingPid => {
+          if (!remoteIdSet.has(existingPid)) {
+            this.closePeer(existingPid);
+          }
+        });
+
+        // 為新加入的遠端玩家建立 P2P 連線
+        remoteIds.forEach(pid => {
+          if (!this.peers.has(pid)) {
+            this.createPeerConnection(pid);
+            // 由字典序較小的一方主動發起 SDP Offer，避免雙向同時發起衝突
+            if (myPlayerId < pid) {
+              this.makeOffer(pid);
+            }
+            // 主動通知新連線的對方自己目前的麥克風狀態
+            this.sendSignal(pid, { type: "mic-status", micOn: this.micEnabled });
+          }
+        });
+      }
+
+      sendSignal(targetPeerId, payload) {
+        if (!this.active || !this.roomId || !targetPeerId) return;
+        const msg = {
+          from: myPlayerId,
+          to: targetPeerId,
+          roomId: this.roomId,
+          ts: Date.now(),
+          ...payload
+        };
+
+        if (this.customSignalingAdapter && typeof this.customSignalingAdapter.send === "function") {
+          try {
+            this.customSignalingAdapter.send(msg);
+          } catch (e) {}
+        } else if (database) {
+          database.ref(`rtc_signals/${this.roomId}/${targetPeerId}`).push(msg).catch(() => {});
+        } else if (this.rtcChannel) {
+          try {
+            this.rtcChannel.postMessage(msg);
+          } catch (e) {}
+        }
+      }
+
+      broadcastMicStatus() {
+        if (!this.active || !this.roomId) return;
+        // 透過信令通道即時廣播給同房所有連線玩家
+        this.peers.forEach((_, peerId) => {
+          this.sendSignal(peerId, { type: "mic-status", micOn: this.micEnabled });
+        });
+        // 同步寫入房間玩家的 micOn 欄位 (僅局部更新，絕不覆蓋牌桌與手牌狀態)
+        if (roomState && roomState.players && roomState.players[myPlayerId]) {
+          roomState.players[myPlayerId].micOn = this.micEnabled;
+        }
+        if (database) {
+          database.ref(`rooms/${this.roomId}/players/${myPlayerId}/micOn`).set(this.micEnabled).catch(() => {});
+        } else if (roomState) {
+          try {
+            localStorage.setItem(`rummikub_room_${this.roomId}`, JSON.stringify(roomState));
+          } catch (e) {}
+        }
+        this.updatePeerVoiceBadges(myPlayerId);
+      }
+
+      createPeerConnection(peerId) {
+        if (this.peers.has(peerId)) return this.peers.get(peerId);
+
+        const pc = new RTCPeerConnection({ iceServers: this.iceServers });
+        const polite = myPlayerId > peerId;
+        const peerObj = {
+          pc,
+          polite,
+          makingOffer: false,
+          ignoreOffer: false,
+          pendingRenegotiation: false,
+          pendingCandidates: [],
+          remoteStream: null,
+          audioTransceiver: null
+        };
+        this.peers.set(peerId, peerObj);
+
+        // 若本地已有麥克風音軌則直接掛載；否則發起方預先建立 recvonly 音訊通道以確保未開麥也能聽見對方
+        if (this.localStream) {
+          const audioTrack = this.localStream.getAudioTracks()[0];
+          if (audioTrack) {
+            const sender = pc.addTrack(audioTrack, this.localStream);
+            const matched = pc.getTransceivers ? pc.getTransceivers().find(t => t.sender === sender) : null;
+            peerObj.audioTransceiver = matched || null;
+          }
+        } else if (!polite && typeof pc.addTransceiver === "function") {
+          try {
+            peerObj.audioTransceiver = pc.addTransceiver("audio", { direction: "recvonly" });
+          } catch (e) {}
+        }
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            const cand = typeof event.candidate.toJSON === "function"
+              ? event.candidate.toJSON()
+              : {
+                  candidate: event.candidate.candidate,
+                  sdpMid: event.candidate.sdpMid,
+                  sdpMLineIndex: event.candidate.sdpMLineIndex
+                };
+            this.sendSignal(peerId, { type: "ice", candidate: cand });
+          }
+        };
+
+        pc.ontrack = (event) => {
+          const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+          peerObj.remoteStream = stream;
+          this.attachRemoteAudio(peerId, stream);
+        };
+
+        pc.onsignalingstatechange = () => {
+          if (!this.peers.has(peerId)) return;
+          if (pc.signalingState === "stable" && peerObj.pendingRenegotiation) {
+            peerObj.pendingRenegotiation = false;
+            this.makeOffer(peerId);
+          }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          if (!this.peers.has(peerId)) return;
+          if (pc.iceConnectionState === "failed" && !peerObj.polite) {
+            this.makeOffer(peerId, true);
+          }
+        };
+
+        return peerObj;
+      }
+
+      attachRemoteAudio(peerId, stream) {
+        const container = document.getElementById("voice-audio-container");
+        let audioEl = this.remoteAudioEls.get(peerId);
+        if (!audioEl) {
+          audioEl = document.createElement("audio");
+          audioEl.autoplay = true;
+          audioEl.playsInline = true;
+          audioEl.dataset.peerId = peerId;
+          if (container) container.appendChild(audioEl);
+          this.remoteAudioEls.set(peerId, audioEl);
+        }
+        if (audioEl.srcObject !== stream) {
+          audioEl.srcObject = stream;
+        }
+        const isMuted = this.mutedPeers.has(peerId);
+        audioEl.muted = isMuted;
+        stream.getAudioTracks().forEach(track => {
+          track.enabled = !isMuted;
+        });
+        audioEl.play().catch(() => {});
+
+        // 掛載遠端語音音量偵測 (VAD)
+        this.setupAnalyser(peerId, stream);
+      }
+
+      async makeOffer(peerId, iceRestart = false) {
+        const peerObj = this.peers.get(peerId);
+        if (!peerObj || !peerObj.pc) return;
+        const pc = peerObj.pc;
+        if (peerObj.makingOffer || (pc.signalingState !== "stable" && !iceRestart)) {
+          peerObj.pendingRenegotiation = true;
+          return;
+        }
+        try {
+          peerObj.makingOffer = true;
+          peerObj.pendingRenegotiation = false;
+          const offer = await pc.createOffer({ iceRestart, offerToReceiveAudio: true });
+          if (pc.signalingState !== "stable" && !iceRestart) {
+            peerObj.pendingRenegotiation = true;
+            return;
+          }
+          await pc.setLocalDescription(offer);
+          const desc = pc.localDescription && typeof pc.localDescription.toJSON === "function"
+            ? pc.localDescription.toJSON()
+            : { type: pc.localDescription.type, sdp: pc.localDescription.sdp };
+          this.sendSignal(peerId, { type: "sdp", description: desc });
+        } catch (err) {
+          // 忽略交涉競態中的偶發錯誤
+        } finally {
+          peerObj.makingOffer = false;
+        }
+      }
+
+      async handleSignal(msg) {
+        if (!this.active || !msg || !msg.from || msg.from === myPlayerId) return;
+        if (msg.ts && (Date.now() - msg.ts > 45000 || (this.joinedAt && msg.ts < this.joinedAt))) return;
+        const fromId = msg.from;
+
+        if (msg.type === "mic-status") {
+          const isOn = !!msg.micOn;
+          this.remoteMicStatus.set(fromId, isOn);
+          if (roomState && roomState.players && roomState.players[fromId]) {
+            roomState.players[fromId].micOn = isOn;
+          }
+          if (!isOn) {
+            this.setSpeakingState(fromId, false);
+          }
+          this.updatePeerVoiceBadges(fromId);
+          return;
+        }
+
+        const peerObj = this.createPeerConnection(fromId);
+        const pc = peerObj.pc;
+
+        if (msg.type === "sdp" && msg.description) {
+          const description = msg.description;
+          try {
+            const offerCollision =
+              description.type === "offer" &&
+              (peerObj.makingOffer || pc.signalingState !== "stable");
+
+            peerObj.ignoreOffer = !peerObj.polite && offerCollision;
+            if (peerObj.ignoreOffer) return;
+
+            if (offerCollision && pc.signalingState !== "stable") {
+              try {
+                await pc.setLocalDescription({ type: "rollback" });
+              } catch (e) {}
+            }
+
+            await pc.setRemoteDescription(new RTCSessionDescription(description));
+
+            // 套用先前暫存的 ICE Candidates
+            while (peerObj.pendingCandidates.length > 0) {
+              const cand = peerObj.pendingCandidates.shift();
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(cand));
+              } catch (e) {}
+            }
+
+            if (description.type === "offer") {
+              // 若自己已開啟本地麥克風，在回覆 Answer 前確保將音軌掛載到此 Peer
+              if (this.localStream) {
+                await this.attachLocalTrackToPeer(peerObj);
+              }
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              const desc = pc.localDescription && typeof pc.localDescription.toJSON === "function"
+                ? pc.localDescription.toJSON()
+                : { type: pc.localDescription.type, sdp: pc.localDescription.sdp };
+              this.sendSignal(fromId, { type: "sdp", description: desc });
+            }
+          } catch (err) {
+            // 忽略過期或重複信令
+          }
+        } else if (msg.type === "ice" && msg.candidate) {
+          try {
+            if (peerObj.ignoreOffer) return;
+            if (pc.remoteDescription && pc.remoteDescription.type) {
+              await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            } else {
+              peerObj.pendingCandidates.push(msg.candidate);
+            }
+          } catch (err) {}
+        }
+      }
+
+      async attachLocalTrackToPeer(peerObj) {
+        if (!this.localStream || !peerObj || !peerObj.pc) return false;
+        const pc = peerObj.pc;
+        const audioTrack = this.localStream.getAudioTracks()[0];
+        if (!audioTrack) return false;
+
+        const existingSender = pc.getSenders ? pc.getSenders().find(s => s.track && s.track.kind === "audio") : null;
+        if (existingSender) {
+          if (existingSender.track !== audioTrack) {
+            await existingSender.replaceTrack(audioTrack);
+          }
+          return false;
+        }
+
+        const transceivers = pc.getTransceivers ? pc.getTransceivers() : [];
+        const audioTransceiver = peerObj.audioTransceiver || transceivers.find(
+          t => (t.receiver && t.receiver.track && t.receiver.track.kind === "audio") || (t.sender && t.sender.track && t.sender.track.kind === "audio")
+        );
+
+        if (audioTransceiver && audioTransceiver.sender) {
+          await audioTransceiver.sender.replaceTrack(audioTrack);
+          try {
+            audioTransceiver.direction = "sendrecv";
+          } catch (e) {}
+          peerObj.audioTransceiver = audioTransceiver;
+          return true;
+        }
+
+        const sender = pc.addTrack(audioTrack, this.localStream);
+        const matched = pc.getTransceivers ? pc.getTransceivers().find(t => t.sender === sender) : null;
+        peerObj.audioTransceiver = matched || null;
+        return true;
+      }
+
+      // 玩家主動點擊切換麥克風 (預設靜音，點擊後才向瀏覽器請求權限)
+      async toggleMic() {
+        this.unlockRemoteAudio();
+        if (!this.active || !this.roomId) return;
+
+        if (!this.isSupported()) {
+          updateNotice("🎤 目前瀏覽器不支援 WebRTC 即時語音功能。", "warning");
+          return;
+        }
+
+        // 若目前為開麥狀態 -> 切換為靜音關閉
+        if (this.micEnabled) {
+          this.micEnabled = false;
+          if (this.localStream) {
+            this.localStream.getAudioTracks().forEach(track => {
+              track.enabled = false;
+            });
+          }
+          this.setSpeakingState(myPlayerId, false);
+          this.updateMicButtonsUI();
+          this.broadcastMicStatus();
+          return;
+        }
+
+        // 若目前為關閉狀態 -> 嘗試取得麥克風音軌 (啟用回音消除、降噪與自動增益)
+        if (!this.localStream) {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            this.micPermissionDenied = true;
+            this.micEnabled = false;
+            this.updateMicButtonsUI();
+            updateNotice("🎤 無法存取麥克風，但您仍可聽見其他玩家聲音", "warning");
+            return;
+          }
+
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+              },
+              video: false
+            });
+            // 若等待權限期間玩家已離開房間，立即釋放麥克風資源
+            if (!this.active) {
+              stream.getTracks().forEach(t => t.stop());
+              return;
+            }
+            this.localStream = stream;
+            this.micPermissionDenied = false;
+            this.setupAnalyser(myPlayerId, stream);
+
+            // 將本地音軌附加到所有已連線的 Peer 並觸發重新協商
+            for (const [peerId, peerObj] of this.peers.entries()) {
+              const needsNegotiation = await this.attachLocalTrackToPeer(peerObj);
+              if (needsNegotiation) {
+                this.makeOffer(peerId);
+              }
+            }
+          } catch (err) {
+            this.micPermissionDenied = true;
+            this.micEnabled = false;
+            this.updateMicButtonsUI();
+            updateNotice("🎤 無法存取麥克風，但您仍可聽見其他玩家聲音", "warning");
+            return;
+          }
+        }
+
+        // 啟用本地麥克風音軌
+        this.localStream.getAudioTracks().forEach(track => {
+          track.enabled = true;
+        });
+        this.micEnabled = true;
+        this.updateMicButtonsUI();
+        this.broadcastMicStatus();
+        if (!database && !this.customSignalingAdapter) {
+          updateNotice("🎤 本機麥克風收音模擬已開啟（對著麥克風說話可測試頭像綠光；填入 Firebase 設定即可跨裝置即時通話）", "info");
+        } else {
+          updateNotice("🎤 麥克風已開啟，同房玩家現在可以聽見您的聲音", "info");
+        }
+      }
+
+      // 單獨靜音 / 解除靜音某位遠端玩家 (僅影響自己本地端)
+      toggleMuteRemotePeer(peerId) {
+        if (!peerId || peerId === myPlayerId) return;
+        this.unlockRemoteAudio();
+        const willMute = !this.mutedPeers.has(peerId);
+        if (willMute) {
+          this.mutedPeers.add(peerId);
+          this.setSpeakingState(peerId, false);
+        } else {
+          this.mutedPeers.delete(peerId);
+        }
+
+        const audioEl = this.remoteAudioEls.get(peerId);
+        if (audioEl) {
+          audioEl.muted = willMute;
+          if (!willMute) audioEl.play().catch(() => {});
+        }
+        const peerObj = this.peers.get(peerId);
+        if (peerObj && peerObj.remoteStream) {
+          peerObj.remoteStream.getAudioTracks().forEach(track => {
+            track.enabled = !willMute;
+          });
+        }
+
+        this.updatePeerMuteButtons(peerId);
+      }
+
+      isPeerMutedLocally(peerId) {
+        return this.mutedPeers.has(peerId);
+      }
+
+      isPlayerMicOn(playerId) {
+        if (playerId === myPlayerId) return this.micEnabled;
+        if (this.remoteMicStatus.has(playerId)) return !!this.remoteMicStatus.get(playerId);
+        if (roomState && roomState.players && roomState.players[playerId]) {
+          return !!roomState.players[playerId].micOn;
+        }
+        return false;
+      }
+
+      isPlayerSpeaking(playerId) {
+        return this.speakingPeers.has(playerId);
+      }
+
+      setupAnalyser(playerId, stream) {
+        this.teardownAnalyser(playerId);
+        this.ensureAudioContext();
+        if (!this.audioCtx || !stream) return;
+        try {
+          const source = this.audioCtx.createMediaStreamSource(stream);
+          const analyser = this.audioCtx.createAnalyser();
+          analyser.fftSize = 512;
+          analyser.smoothingTimeConstant = 0.5;
+          source.connect(analyser);
+          const data = new Uint8Array(analyser.fftSize);
+          this.analysers.set(playerId, { source, analyser, data });
+        } catch (e) {}
+      }
+
+      teardownAnalyser(playerId) {
+        const entry = this.analysers.get(playerId);
+        if (entry) {
+          try { entry.source.disconnect(); } catch (e) {}
+          try { entry.analyser.disconnect(); } catch (e) {}
+          this.analysers.delete(playerId);
+        }
+      }
+
+      startVadLoop() {
+        if (this.vadInterval) clearInterval(this.vadInterval);
+        this.vadInterval = setInterval(() => {
+          if (!this.active) return;
+          const now = Date.now();
+          this.analysers.forEach((entry, playerId) => {
+            if (playerId === myPlayerId && !this.micEnabled) {
+              this.setSpeakingState(playerId, false);
+              return;
+            }
+            if (playerId !== myPlayerId && this.mutedPeers.has(playerId)) {
+              this.setSpeakingState(playerId, false);
+              return;
+            }
+            try {
+              entry.analyser.getByteTimeDomainData(entry.data);
+              let sumSq = 0;
+              for (let i = 0; i < entry.data.length; i++) {
+                const norm = (entry.data[i] - 128) / 128;
+                sumSq += norm * norm;
+              }
+              const rms = Math.sqrt(sumSq / entry.data.length);
+              if (rms > 0.022) {
+                this.speakingHoldUntil.set(playerId, now + 280);
+                this.setSpeakingState(playerId, true);
+              } else {
+                const holdUntil = this.speakingHoldUntil.get(playerId) || 0;
+                if (now > holdUntil) {
+                  this.setSpeakingState(playerId, false);
+                }
+              }
+            } catch (e) {}
+          });
+        }, 100);
+      }
+
+      setSpeakingState(playerId, isSpeaking) {
+        const wasSpeaking = this.speakingPeers.has(playerId);
+        if (wasSpeaking === isSpeaking) return;
+        if (isSpeaking) {
+          this.speakingPeers.add(playerId);
+        } else {
+          this.speakingPeers.delete(playerId);
+        }
+        this.applySpeakingClass(playerId, isSpeaking);
+      }
+
+      applySpeakingClass(playerId, isSpeaking) {
+        const gameCard = document.getElementById(`player-card-${playerId}`);
+        if (gameCard) gameCard.classList.toggle("is-speaking", isSpeaking);
+        const waitingCard = document.getElementById(`waiting-player-${playerId}`);
+        if (waitingCard) waitingCard.classList.toggle("is-speaking", isSpeaking);
+      }
+
+      updateMicButtonsUI() {
+        const btns = [
+          document.getElementById("btn-mic-toggle"),
+          document.getElementById("btn-waiting-mic-toggle")
+        ];
+        btns.forEach(btn => {
+          if (!btn) return;
+          if (this.micEnabled) {
+            btn.classList.add("mic-on");
+            btn.innerText = "🎤 麥克風開";
+            btn.title = "點擊關閉麥克風 (靜音)";
+          } else {
+            btn.classList.remove("mic-on");
+            btn.innerText = "🔇 麥克風關";
+            btn.title = "點擊開啟麥克風與同房玩家語音通話";
+          }
+        });
+      }
+
+      updatePeerVoiceBadges(playerId) {
+        const micOn = this.isPlayerMicOn(playerId);
+        document.querySelectorAll(`.mic-status-badge[data-player-id="${playerId}"]`).forEach(badge => {
+          badge.classList.toggle("mic-live", micOn);
+          badge.innerText = micOn ? "🎤" : "🔇";
+          badge.title = micOn ? "麥克風已開啟" : "麥克風靜音中";
+        });
+      }
+
+      updatePeerMuteButtons(peerId) {
+        const isMuted = this.mutedPeers.has(peerId);
+        document.querySelectorAll(`.btn-peer-mute[data-peer-id="${peerId}"]`).forEach(btn => {
+          btn.classList.toggle("is-muted", isMuted);
+          btn.innerText = isMuted ? "🔇" : "🔊";
+          btn.title = isMuted ? "已靜音此玩家，點擊解除靜音" : "點擊單獨靜音此玩家";
+        });
+      }
+
+      closePeer(peerId) {
+        const peerObj = this.peers.get(peerId);
+        if (peerObj && peerObj.pc) {
+          try { peerObj.pc.onicecandidate = null; } catch (e) {}
+          try { peerObj.pc.ontrack = null; } catch (e) {}
+          try { peerObj.pc.oniceconnectionstatechange = null; } catch (e) {}
+          try { peerObj.pc.close(); } catch (e) {}
+        }
+        this.peers.delete(peerId);
+
+        const audioEl = this.remoteAudioEls.get(peerId);
+        if (audioEl) {
+          try {
+            audioEl.pause();
+            audioEl.srcObject = null;
+            audioEl.remove();
+          } catch (e) {}
+          this.remoteAudioEls.delete(peerId);
+        }
+
+        this.teardownAnalyser(peerId);
+        this.remoteMicStatus.delete(peerId);
+        this.mutedPeers.delete(peerId);
+        this.speakingHoldUntil.delete(peerId);
+        this.setSpeakingState(peerId, false);
+      }
+
+      // 離開房間時徹底釋放麥克風資源並斷開所有語音連線
+      leaveRoom() {
+        const leavingRoomId = this.roomId;
+        this.active = false;
+        this.roomId = "";
+        this.micEnabled = false;
+        this.micPermissionDenied = false;
+
+        if (this.vadInterval) {
+          clearInterval(this.vadInterval);
+          this.vadInterval = null;
+        }
+
+        Array.from(this.peers.keys()).forEach(pid => this.closePeer(pid));
+
+        if (this.localStream) {
+          this.localStream.getTracks().forEach(track => {
+            try { track.stop(); } catch (e) {}
+          });
+          this.localStream = null;
+        }
+        this.teardownAnalyser(myPlayerId);
+
+        Array.from(this.speakingPeers).forEach(pid => this.applySpeakingClass(pid, false));
+        this.speakingPeers.clear();
+        this.speakingHoldUntil.clear();
+        this.mutedPeers.clear();
+        this.remoteMicStatus.clear();
+
+        if (this.signalRef) {
+          try {
+            if (this.signalHandler) this.signalRef.off("child_added", this.signalHandler);
+            this.signalRef.remove().catch(() => {});
+          } catch (e) {}
+          this.signalRef = null;
+          this.signalHandler = null;
+        }
+
+        if (this.rtcChannel) {
+          try { this.rtcChannel.close(); } catch (e) {}
+          this.rtcChannel = null;
+        }
+
+        const audioContainer = document.getElementById("voice-audio-container");
+        if (audioContainer) audioContainer.innerHTML = "";
+
+        this.updateMicButtonsUI();
+        const headerMicBtn = document.getElementById("btn-mic-toggle");
+        if (headerMicBtn) headerMicBtn.style.display = "none";
+      }
+    }
+
+    const voiceChat = new VoiceChatManager();
+
+    // ==========================================
     // 遊戲狀態與資料模型
     // ==========================================
     const COLORS = ["black", "red", "blue", "orange"];
@@ -1479,6 +2621,7 @@
     let roomState = null;
     let localBoard = []; // 本回合操作中的牌桌狀態 [[Tile, Tile], ...]
     let localHand = [];  // 本回合操作中的手牌 [Tile, Tile, ...]
+    let localHandOrder = []; // 本地獨立手牌排序 ID 陣列，鎖定玩家理牌順序不受伺服器同步覆蓋
     let turnStartSnapshot = null; // 回合初備份，用於一鍵還原
 
     // 選取狀態 (支援多選)
@@ -1486,9 +2629,143 @@
     // board: [{ setId, tileIndex, tileId }, ...]
     let selectedHandTileIds = new Set();
     let selectedBoardItems = []; // Array of { setId, tileIndex, tile }
+    let currentDropHoverEl = null; // 追蹤目前高亮的拖曳目標，避免重複重繪造成閃爍
 
     let timerInterval = null;
     let lastTickSecond = -1;
+
+    // ==========================================
+    // 手機強制橫向座標映射與本地手牌順序鎖定工具
+    // ==========================================
+    function isForcedLandscape() {
+      return Boolean(
+        window.matchMedia &&
+        window.matchMedia("(max-width: 767px) and (orientation: portrait), (max-width: 920px) and (orientation: portrait) and (pointer: coarse)").matches
+      );
+    }
+
+    function getViewportRoot() {
+      return document.getElementById("app-viewport-root") || document.body;
+    }
+
+    // 將瀏覽器視窗座標 (clientX, clientY) 轉換為旋轉容器內之局部座標 (x, y)
+    function mapClientToLocal(clientX, clientY) {
+      if (isForcedLandscape()) {
+        return {
+          x: clientY,
+          y: window.innerWidth - clientX
+        };
+      }
+      return { x: clientX, y: clientY };
+    }
+
+    // 鎖定目前手牌順序
+    function lockLocalHandOrder(orderedHand) {
+      localHandOrder = Array.isArray(orderedHand) ? orderedHand.map(t => t.id) : [];
+    }
+
+    // 比對伺服器同步手牌與本地鎖定順序：僅增刪變動之牌，新增抽牌補至最右側，絕不亂跳重置
+    function reconcileHandWithLocalOrder(rawHand) {
+      const incoming = Array.isArray(rawHand) ? rawHand : [];
+      if (incoming.length === 0) {
+        localHandOrder = [];
+        return [];
+      }
+
+      const tileMap = new Map();
+      incoming.forEach(t => {
+        if (t && t.id) tileMap.set(t.id, t);
+      });
+
+      // 保留仍存在於手牌中的既有順序
+      const keptIds = localHandOrder.filter(id => tileMap.has(id));
+      const keptSet = new Set(keptIds);
+
+      // 新抽到的牌或未記錄的牌依序附加到最右側
+      const newIds = [];
+      incoming.forEach(t => {
+        if (t && t.id && !keptSet.has(t.id)) {
+          keptSet.add(t.id);
+          newIds.push(t.id);
+        }
+      });
+
+      localHandOrder = [...keptIds, ...newIds];
+      return localHandOrder.map(id => tileMap.get(id)).filter(Boolean);
+    }
+
+    // 公桌牌組智慧排序演算法 (支援單/雙 Joker 中間缺口自動補位與頭尾 1~13 合法延伸)
+    function sortSetWithJokers(tiles) {
+      if (!Array.isArray(tiles) || tiles.length <= 1) return tiles ? [...tiles] : [];
+
+      const colorOrder = { black: 1, red: 2, blue: 3, orange: 4 };
+      const jokers = tiles.filter(t => t.color === "joker" || t.number === 0);
+      const nonJokers = tiles.filter(t => t.color !== "joker" && t.number !== 0);
+
+      // 全部皆為鬼牌
+      if (nonJokers.length === 0) {
+        return [...jokers];
+      }
+
+      // 無鬼牌：群組依顏色、順子依數字由小到大
+      if (jokers.length === 0) {
+        const allSameNum = nonJokers.every(t => t.number === nonJokers[0].number);
+        return [...nonJokers].sort((a, b) => {
+          if (allSameNum) return (colorOrder[a.color] || 0) - (colorOrder[b.color] || 0);
+          if (a.number !== b.number) return a.number - b.number;
+          return (colorOrder[a.color] || 0) - (colorOrder[b.color] || 0);
+        });
+      }
+
+      // 檢查是否符合同色順子 (Run) 結構：同顏色且無重複數字
+      const targetColor = nonJokers[0].color;
+      const allSameColor = nonJokers.every(t => t.color === targetColor);
+      const sortedNonJokers = [...nonJokers].sort((a, b) => a.number - b.number);
+      const hasDuplicate = sortedNonJokers.some((t, i) => i > 0 && t.number === sortedNonJokers[i - 1].number);
+
+      if (allSameColor && !hasDuplicate) {
+        const availableJokers = [...jokers];
+        const result = [sortedNonJokers[0]];
+
+        // 1. 優先偵測並填補所有中間缺口（支援單張與雙/多張 Joker 連續補位）
+        for (let i = 1; i < sortedNonJokers.length; i++) {
+          const prevTile = sortedNonJokers[i - 1];
+          const currTile = sortedNonJokers[i];
+          const gap = currTile.number - prevTile.number - 1;
+
+          for (let g = 0; g < gap && availableJokers.length > 0; g++) {
+            result.push(availableJokers.shift());
+          }
+          result.push(currTile);
+        }
+
+        // 2. 填補完內部空缺後若尚餘鬼牌，依合法順子範圍 (1 ~ 13) 延伸補於尾端或前端
+        let currentMin = sortedNonJokers[0].number;
+        let currentMax = sortedNonJokers[sortedNonJokers.length - 1].number;
+
+        while (availableJokers.length > 0) {
+          const joker = availableJokers.shift();
+          if (currentMax < 13) {
+            result.push(joker);
+            currentMax++;
+          } else if (currentMin > 1) {
+            result.unshift(joker);
+            currentMin--;
+          } else {
+            result.push(joker);
+          }
+        }
+
+        return result;
+      }
+
+      // 群組 (Group) 或混色組合：數字/顏色整齊排列，鬼牌放於尾端
+      sortedNonJokers.sort((a, b) => {
+        if (a.number !== b.number) return a.number - b.number;
+        return (colorOrder[a.color] || 0) - (colorOrder[b.color] || 0);
+      });
+      return [...sortedNonJokers, ...jokers];
+    }
 
     // ==========================================
     // 牌庫生成器 (依玩家人數動態擴充)
@@ -1749,17 +3026,21 @@
       if (!newState) {
         // 房間已被刪除或解散
         if (currentRoomId) {
+          closeLeaveConfirmModal(false);
+          voiceChat.leaveRoom();
           localStorage.removeItem("rummikub_room_id");
           currentRoomId = "";
           roomState = null;
           localBoard = [];
           localHand = [];
+          localHandOrder = [];
           turnStartSnapshot = null;
           document.getElementById("modal-waiting").style.display = "none";
           document.getElementById("modal-gameover").style.display = "none";
           document.getElementById("modal-lobby").style.display = "flex";
           document.getElementById("header-room-info").innerText = "尚未進入房間";
           document.getElementById("btn-leave-room").style.display = "none";
+          document.getElementById("btn-mic-toggle").style.display = "none";
           updateNotice("該房間已關閉或被解散。", "warning");
         }
         return;
@@ -1767,17 +3048,21 @@
 
       // 被移出房間檢驗：若當前在房間內，但伺服器端玩家名單中已無自己
       if (currentRoomId && newState.players && !newState.players[myPlayerId]) {
+        closeLeaveConfirmModal(false);
+        voiceChat.leaveRoom();
         localStorage.removeItem("rummikub_room_id");
         currentRoomId = "";
         roomState = null;
         localBoard = [];
         localHand = [];
+        localHandOrder = [];
         turnStartSnapshot = null;
         document.getElementById("modal-waiting").style.display = "none";
         document.getElementById("modal-gameover").style.display = "none";
         document.getElementById("modal-lobby").style.display = "flex";
         document.getElementById("header-room-info").innerText = "尚未進入房間";
         document.getElementById("btn-leave-room").style.display = "none";
+        document.getElementById("btn-mic-toggle").style.display = "none";
         updateNotice("⚠️ 你已離開或被移出房間", "alert");
         return;
       }
@@ -1802,6 +3087,12 @@
 
       const prevTurnPlayer = roomState ? roomState.currentTurnPlayerId : null;
       roomState = newState;
+
+      // 維持同房間語音連線並同步 Peer 名單 (等待室 -> 遊戲中不中斷)
+      if (currentRoomId) {
+        voiceChat.joinRoom(currentRoomId);
+        voiceChat.syncPeers(roomState.players);
+      }
 
       // 檢查語音氣泡
       if (roomState.lastChat && Date.now() - roomState.lastChat.timestamp < 3500) {
@@ -1866,7 +3157,8 @@
               isHost: true,
               isIceBroken: false,
               handCount: 0,
-              totalThinkingTime: 0
+              totalThinkingTime: 0,
+              micOn: false
             }
           },
           hands: {},
@@ -1890,18 +3182,22 @@
             isHost: false,
             isIceBroken: false,
             handCount: 0,
-            totalThinkingTime: 0
+            totalThinkingTime: 0,
+            micOn: false
           };
           existing.players = players;
           syncRoomState(existing);
         } else {
-          // 斷線重連更新暱稱
+          // 斷線重連更新暱稱並重置預設靜音狀態
           players[myPlayerId].name = nickname;
+          players[myPlayerId].micOn = false;
           existing.players = players;
           syncRoomState(existing);
         }
       }
 
+      // 進入房間即建立語音連線通道 (預設靜音，不中斷跨等待室與牌桌)
+      voiceChat.joinRoom(roomId);
       attachRoomListener(roomId);
       document.getElementById("modal-lobby").style.display = "none";
 
@@ -1944,6 +3240,7 @@
       roomState.hands = hands;
       roomState.currentTurnPlayerId = firstPlayerId;
       roomState.turnStartTime = Date.now();
+      localHandOrder = [];
 
       if (firstPlayerId === myPlayerId) {
         initMyTurn();
@@ -1957,7 +3254,7 @@
     // ==========================================
     function initMyTurn() {
       const myHand = (roomState && roomState.hands && roomState.hands[myPlayerId]) || [];
-      localHand = JSON.parse(JSON.stringify(myHand));
+      localHand = reconcileHandWithLocalOrder(JSON.parse(JSON.stringify(myHand)));
       localBoard = JSON.parse(JSON.stringify((roomState && roomState.board) || []));
 
       turnStartSnapshot = {
@@ -2036,8 +3333,8 @@
       // 清除空牌組
       localBoard = localBoard.filter(set => set.length > 0);
 
-      // 建立全新牌組加入牌桌
-      localBoard.push(selected);
+      // 建立全新牌組加入牌桌並套用 Joker 智慧補位排序
+      localBoard.push(sortSetWithJokers(selected));
 
       selectedHandTileIds.clear();
       selectedBoardItems = [];
@@ -2049,6 +3346,8 @@
       if (!isMyTurn()) return;
       const selected = getSelectedTiles();
       if (selected.length === 0) return;
+      const targetSetRef = localBoard[targetSetId];
+      if (!targetSetRef) return;
 
       sound.playClick();
 
@@ -2080,12 +3379,21 @@
         });
       });
 
-      localBoard = localBoard.filter(set => set.length > 0);
+      // 加入目標牌組（避免重複）並套用 Joker 智慧補位排序
+      const existingIds = new Set(targetSetRef.map(t => t.id));
+      selected.forEach(tile => {
+        if (!existingIds.has(tile.id)) {
+          targetSetRef.push(tile);
+        }
+      });
 
-      // 加入目標牌組
-      if (localBoard[targetSetId]) {
-        localBoard[targetSetId].push(...selected);
+      const sortedTarget = sortSetWithJokers(targetSetRef);
+      const targetIdx = localBoard.indexOf(targetSetRef);
+      if (targetIdx >= 0) {
+        localBoard[targetIdx] = sortedTarget;
       }
+
+      localBoard = localBoard.filter(set => set.length > 0);
 
       selectedHandTileIds.clear();
       selectedBoardItems = [];
@@ -2096,69 +3404,7 @@
     function autoSortSet(setId) {
       if (!isMyTurn() || !localBoard[setId]) return;
       sound.playClick();
-      const set = localBoard[setId];
-      if (!set || set.length <= 1) return;
-
-      const jokers = set.filter(t => t.color === "joker" || t.number === 0);
-      const nonJokers = set.filter(t => t.color !== "joker" && t.number !== 0);
-
-      // 全部都是鬼牌或沒有鬼牌
-      if (nonJokers.length === 0) {
-        renderGame();
-        return;
-      }
-      if (jokers.length === 0) {
-        set.sort((a, b) => (a.number || 0) - (b.number || 0));
-        renderGame();
-        return;
-      }
-
-      // 判斷是否為同色順子（Run）候選：同色且數字不重複
-      const targetColor = nonJokers[0].color;
-      const allSameColor = nonJokers.every(t => t.color === targetColor);
-      const sortedNonJokers = [...nonJokers].sort((a, b) => a.number - b.number);
-      const hasDuplicate = sortedNonJokers.some((t, i) => i > 0 && t.number === sortedNonJokers[i - 1].number);
-
-      if (allSameColor && !hasDuplicate) {
-        // --- 順子（Run）鬼牌精準補缺演算法 ---
-        const availableJokers = [...jokers];
-        const result = [sortedNonJokers[0]];
-
-        // 依序檢查每個相鄰數字間的空檔 (Gap)
-        for (let i = 1; i < sortedNonJokers.length; i++) {
-          const prevTile = sortedNonJokers[i - 1];
-          const currTile = sortedNonJokers[i];
-          const gap = currTile.number - prevTile.number - 1;
-
-          // 若有空缺，以鬼牌依序補入
-          if (gap > 0) {
-            for (let g = 0; g < gap && availableJokers.length > 0; g++) {
-              result.push(availableJokers.shift());
-            }
-          }
-          result.push(currTile);
-        }
-
-        // 若填補完內部空缺後仍有多餘鬼牌
-        while (availableJokers.length > 0) {
-          const joker = availableJokers.shift();
-          const maxNum = sortedNonJokers[sortedNonJokers.length - 1].number;
-          // 若最大數字已達 13（如：藍12、藍13、鬼牌）：自動置於最前端；否則優先置於末端延伸
-          if (maxNum === 13) {
-            result.unshift(joker);
-          } else {
-            result.push(joker);
-          }
-        }
-
-        localBoard[setId] = result;
-      } else {
-        // --- 群組（Group）或同數字不同色排法 ---
-        // 數字牌在前依數字由小到大排列，鬼牌放置於末端
-        sortedNonJokers.sort((a, b) => (a.number || 0) - (b.number || 0));
-        localBoard[setId] = [...sortedNonJokers, ...jokers];
-      }
-
+      localBoard[setId] = sortSetWithJokers(localBoard[setId]);
       renderGame();
     }
 
@@ -2166,7 +3412,7 @@
     function handleResetTurn() {
       if (!isMyTurn() || !turnStartSnapshot) return;
       sound.playClick();
-      localHand = JSON.parse(JSON.stringify(turnStartSnapshot.hand));
+      localHand = reconcileHandWithLocalOrder(JSON.parse(JSON.stringify(turnStartSnapshot.hand)));
       localBoard = JSON.parse(JSON.stringify(turnStartSnapshot.board));
       selectedHandTileIds.clear();
       selectedBoardItems = [];
@@ -2181,11 +3427,12 @@
       // 先強制還原桌面與手牌
       handleResetTurn();
 
-      // 從牌庫摸 1 張牌
+      // 從牌庫摸 1 張牌（加到最右側並更新本地手牌順序鎖定）
       let deck = roomState.deck || [];
       if (deck.length > 0) {
         const drawn = deck.shift();
         localHand.push(drawn);
+        lockLocalHandOrder(localHand);
       }
 
       // 提交並輪到下一位
@@ -2259,6 +3506,7 @@
         if (!roomState.hands) roomState.hands = {};
         roomState.hands[myPlayerId] = [];
         roomState.board = localBoard;
+        lockLocalHandOrder([]);
 
         // 立即觸發結算，絕不切換下一位玩家！
         triggerGameOver(myPlayerId);
@@ -2273,6 +3521,8 @@
     // 提交回合結果，換下一位玩家或宣告獲勝
     function commitTurnEnd(didPlayValidCards) {
       const currentHand = localHand || [];
+      // 同步鎖定剩餘手牌順序，徹底移除已出牌 ID 防範幽靈牌
+      lockLocalHandOrder(currentHand);
       const now = Date.now();
       const elapsedSec = Math.min(
         roomState.turnTimeLimit || 60,
@@ -2323,6 +3573,92 @@
       }
     }
 
+    // 離開房間自訂確認彈窗 (防範操作麥克風/音效時誤觸退出對局，且在手機橫向與 iframe 內皆穩定顯示)
+    let pendingLeaveConfirmResolve = null;
+    function closeLeaveConfirmModal(result) {
+      const modal = document.getElementById("modal-confirm-leave");
+      if (modal) modal.style.display = "none";
+      if (pendingLeaveConfirmResolve) {
+        const resolver = pendingLeaveConfirmResolve;
+        pendingLeaveConfirmResolve = null;
+        resolver(!!result);
+      }
+    }
+
+    function confirmLeaveDialog(isPlaying) {
+      const modal = document.getElementById("modal-confirm-leave");
+      const titleEl = document.getElementById("confirm-leave-title");
+      const descEl = document.getElementById("confirm-leave-desc");
+      const cancelBtn = document.getElementById("btn-confirm-leave-cancel");
+      const okBtn = document.getElementById("btn-confirm-leave-ok");
+
+      if (!modal || !titleEl || !descEl || !cancelBtn || !okBtn) {
+        const fallbackMsg = isPlaying
+          ? "確定要中途退出遊戲嗎？退出後將無法回到本局。"
+          : "確定要離開目前房間嗎？";
+        return Promise.resolve(window.confirm(fallbackMsg));
+      }
+
+      // 若前一個確認彈窗尚未關閉，先安全取消避免重複觸發
+      if (pendingLeaveConfirmResolve) {
+        closeLeaveConfirmModal(false);
+      }
+
+      if (isPlaying) {
+        titleEl.innerText = "⚠️ 確定要中途離開對局嗎？";
+        titleEl.style.color = "#fca5a5";
+        descEl.innerText = "目前遊戲仍在進行中！若現在離開，您的手牌將自動洗回公共牌庫，且無法再回到本局對戰。";
+        cancelBtn.innerText = "繼續遊戲（取消）";
+        okBtn.innerText = "確定退出對局";
+      } else {
+        titleEl.innerText = "🚪 確定要離開房間嗎？";
+        titleEl.style.color = "#facc15";
+        descEl.innerText = "離開後將斷開語音連線並返回大廳首頁。";
+        cancelBtn.innerText = "取消";
+        okBtn.innerText = "確定離開";
+      }
+
+      modal.style.display = "flex";
+      sound.playClick();
+
+      return new Promise((resolve) => {
+        pendingLeaveConfirmResolve = resolve;
+
+        const onKeyDown = (evt) => {
+          if (evt.key === "Escape") {
+            cleanup();
+            closeLeaveConfirmModal(false);
+          }
+        };
+        const cleanup = () => {
+          window.removeEventListener("keydown", onKeyDown);
+          cancelBtn.onclick = null;
+          okBtn.onclick = null;
+          modal.onclick = null;
+        };
+
+        cancelBtn.onclick = (evt) => {
+          evt.stopPropagation();
+          sound.playClick();
+          cleanup();
+          closeLeaveConfirmModal(false);
+        };
+        okBtn.onclick = (evt) => {
+          evt.stopPropagation();
+          cleanup();
+          closeLeaveConfirmModal(true);
+        };
+        modal.onclick = (evt) => {
+          if (evt.target === modal) {
+            sound.playClick();
+            cleanup();
+            closeLeaveConfirmModal(false);
+          }
+        };
+        window.addEventListener("keydown", onKeyDown);
+      });
+    }
+
     // 玩家主動離開房間 (支援等待室、遊戲進行中安全退出、手牌回庫、房主移交與空房刪除)
     async function leaveRoom() {
       if (!currentRoomId) return;
@@ -2330,11 +3666,8 @@
       const isPlaying = roomState && roomState.status === "playing";
       const isFinished = roomState && roomState.status === "finished";
 
-      const confirmMsg = isPlaying
-        ? "確定要中途退出遊戲嗎？退出後將無法回到本局。"
-        : "確定要離開目前房間嗎？";
-
-      if (!confirm(confirmMsg)) return;
+      const confirmed = await confirmLeaveDialog(isPlaying);
+      if (!confirmed || !currentRoomId) return;
 
       sound.playClick();
       const leavingPlayerId = myPlayerId;
@@ -2376,10 +3709,11 @@
 
         const remainingPlayerIds = Object.keys(roomState.players || {});
 
-        // 情況 1：房間內活躍玩家人數歸零 -> 徹底從資料庫刪除該空房間
+        // 情況 1：房間內活躍玩家人數歸零 -> 徹底從資料庫刪除該空房間與語音信令節點
         if (remainingPlayerIds.length === 0) {
           if (database && leavingRoomId) {
             await database.ref(`rooms/${leavingRoomId}`).remove();
+            await database.ref(`rtc_signals/${leavingRoomId}`).remove().catch(() => {});
           } else {
             localStorage.removeItem(`rummikub_room_${leavingRoomId}`);
             if (syncChannel) {
@@ -2426,12 +3760,16 @@
         }
       }
 
+      // 釋放麥克風資源並斷開同房間語音連線
+      voiceChat.leaveRoom();
+
       // 清除本地 localStorage 重連紀錄
       localStorage.removeItem("rummikub_room_id");
       currentRoomId = "";
       roomState = null;
       localBoard = [];
       localHand = [];
+      localHandOrder = [];
       turnStartSnapshot = null;
       selectedHandTileIds.clear();
       selectedBoardItems = [];
@@ -2442,6 +3780,7 @@
       document.getElementById("modal-lobby").style.display = "flex";
       document.getElementById("header-room-info").innerText = "尚未進入房間";
       document.getElementById("btn-leave-room").style.display = "none";
+      document.getElementById("btn-mic-toggle").style.display = "none";
       updateNotice("已離開房間。", "info");
     }
 
@@ -2603,8 +3942,11 @@
       // 頂部導航資訊
       document.getElementById("header-room-info").innerText =
         `房號: ${roomState.roomId} | ${isWaiting ? "等待中" : isPlaying ? "遊戲進行中" : "已結算"}`;
-      // 在房間內時（等待大廳、遊戲中、結算後）均顯示離開房間按鈕
+      // 在房間內時（等待大廳、遊戲中、結算後）均顯示麥克風與離開房間按鈕
       document.getElementById("btn-leave-room").style.display = currentRoomId ? "inline-flex" : "none";
+      const headerMicBtn = document.getElementById("btn-mic-toggle");
+      if (headerMicBtn) headerMicBtn.style.display = currentRoomId ? "inline-flex" : "none";
+      voiceChat.updateMicButtonsUI();
 
       // 模態視窗顯示管理
       document.getElementById("modal-lobby").style.display = currentRoomId ? "none" : "flex";
@@ -2612,6 +3954,7 @@
       document.getElementById("modal-gameover").style.display = isFinished ? "flex" : "none";
 
       if (isWaiting) {
+        localHandOrder = [];
         renderWaitingLobby();
         return;
       }
@@ -2620,12 +3963,13 @@
         renderLeaderboard();
       }
 
-      // 手牌與桌面快照保護 (修復：僅在尚無快照時初始化，手牌出完歸零時絕不重新覆蓋手牌)
+      // 手牌與桌面快照保護 (保留本地獨立排序 localHandOrder，不因伺服器同步而亂跳重置)
       if (isPlaying) {
         if (isMyTurn() && !turnStartSnapshot) {
           initMyTurn();
         } else if (!isMyTurn()) {
-          localHand = (roomState.hands && roomState.hands[myPlayerId]) || [];
+          const rawServerHand = (roomState.hands && roomState.hands[myPlayerId]) || [];
+          localHand = reconcileHandWithLocalOrder(JSON.parse(JSON.stringify(rawServerHand)));
           turnStartSnapshot = null;
         }
       }
@@ -2706,26 +4050,51 @@
       const listContainer = document.getElementById("waiting-player-list");
       listContainer.innerHTML = "";
       Object.values(players).forEach(p => {
+        const isBot = p.id.startsWith("bot_");
+        const isMe = (p.id === myPlayerId);
+        const micOn = !isBot && voiceChat.isPlayerMicOn(p.id);
+        const isMutedLocally = !isMe && !isBot && voiceChat.isPeerMutedLocally(p.id);
+        const isSpeaking = !isBot && voiceChat.isPlayerSpeaking(p.id);
+
         const item = document.createElement("div");
-        item.className = "lobby-player-item";
+        item.id = `waiting-player-${p.id}`;
+        item.className = `lobby-player-item ${isSpeaking ? "is-speaking" : ""}`;
 
         // 僅房主在等待大廳可看到踢出按鈕，且不顯示在自己名字旁
         let kickBtnHtml = "";
-        if (isHost && p.id !== myPlayerId) {
+        if (isHost && !isMe) {
           kickBtnHtml = `<button class="btn-kick-player" data-player-id="${p.id}" title="將該玩家踢出房間">踢出 ✕</button>`;
         }
 
+        // 麥克風狀態與單獨靜音按鈕 (真實玩家均顯示麥克風狀態，其他真實玩家額外顯示單獨靜音鈕)
+        const micBadgeHtml = !isBot
+          ? `<span class="mic-status-badge ${micOn ? "mic-live" : ""}" data-player-id="${p.id}" title="${micOn ? "麥克風已開啟" : "麥克風靜音中"}">${micOn ? "🎤" : "🔇"}</span>`
+          : "";
+        const peerMuteBtnHtml = (!isMe && !isBot)
+          ? `<button class="btn-peer-mute ${isMutedLocally ? "is-muted" : ""}" data-peer-id="${p.id}" title="${isMutedLocally ? "已靜音此玩家，點擊解除靜音" : "點擊單獨靜音此玩家"}">${isMutedLocally ? "🔇" : "🔊"}</button>`
+          : "";
+
         item.innerHTML = `
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:1.1rem;">${p.isHost ? "👑" : "👤"}</span>
-            <strong>${p.name} ${p.id === myPlayerId ? "(我)" : ""}</strong>
+          <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+            <span class="lobby-player-avatar">${p.isHost ? "👑" : "👤"}</span>
+            <strong style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.name} ${isMe ? "(我)" : ""}</strong>
+            <span class="player-voice-row">${micBadgeHtml}${peerMuteBtnHtml}</span>
           </div>
-          <div style="display:flex; align-items:center;">
+          <div style="display:flex; align-items:center; flex-shrink:0;">
             <span style="font-size:0.75rem; color:#94a3b8;">${p.isHost ? "房主" : "準備中"}</span>
             ${kickBtnHtml}
           </div>
         `;
         listContainer.appendChild(item);
+      });
+
+      // 綁定單獨靜音其他玩家事件
+      listContainer.querySelectorAll(".btn-peer-mute").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const targetId = btn.getAttribute("data-peer-id");
+          if (targetId) voiceChat.toggleMuteRemotePeer(targetId);
+        };
       });
 
       // 綁定踢出事件
@@ -2768,9 +4137,15 @@
 
       Object.values(players).forEach(p => {
         const isCurrentTurn = (roomState.currentTurnPlayerId === p.id);
+        const isMe = (p.id === myPlayerId);
+        const isBot = p.id.startsWith("bot_");
+        const micOn = !isBot && voiceChat.isPlayerMicOn(p.id);
+        const isMutedLocally = !isMe && !isBot && voiceChat.isPeerMutedLocally(p.id);
+        const isSpeaking = !isBot && voiceChat.isPlayerSpeaking(p.id);
+
         const card = document.createElement("div");
         card.id = `player-card-${p.id}`;
-        card.className = `player-card ${isCurrentTurn ? "active-turn" : ""} ${p.id === myPlayerId ? "is-me" : ""}`;
+        card.className = `player-card ${isCurrentTurn ? "active-turn" : ""} ${isMe ? "is-me" : ""} ${isSpeaking ? "is-speaking" : ""}`;
 
         const initials = p.name ? p.name.substring(0, 1).toUpperCase() : "?";
         const thinkSec = p.totalThinkingTime || 0;
@@ -2788,13 +4163,23 @@
           ? `<div class="chat-bubble">${roomState.lastChat.emoji}</div>`
           : "";
 
+        const micBadgeHtml = !isBot
+          ? `<span class="mic-status-badge ${micOn ? "mic-live" : ""}" data-player-id="${p.id}" title="${micOn ? "麥克風已開啟" : "麥克風靜音中"}">${micOn ? "🎤" : "🔇"}</span>`
+          : "";
+        const peerMuteBtnHtml = (!isMe && !isBot)
+          ? `<button class="btn-peer-mute ${isMutedLocally ? "is-muted" : ""}" data-peer-id="${p.id}" title="${isMutedLocally ? "已靜音此玩家，點擊解除靜音" : "點擊單獨靜音此玩家"}">${isMutedLocally ? "🔇" : "🔊"}</button>`
+          : "";
+
         card.innerHTML = `
           ${chatBubbleHtml}
           <div class="player-avatar">${initials}</div>
           <div class="player-meta">
-            <div class="player-name">${p.name} ${p.id === myPlayerId ? "⭐" : ""}</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px;">
+              <div class="player-name">${p.name} ${isMe ? "⭐" : ""}</div>
+              <span class="player-voice-row">${micBadgeHtml}${peerMuteBtnHtml}</span>
+            </div>
             <div class="player-sub">
-              <span>🀄 ${p.id === myPlayerId && isMyTurn() ? (localHand || []).length : (p.handCount !== undefined ? p.handCount : ((roomState.hands && roomState.hands[p.id]) ? roomState.hands[p.id].length : 0))} 張</span>
+              <span>🀄 ${isMe && isMyTurn() ? (localHand || []).length : (p.handCount !== undefined ? p.handCount : ((roomState.hands && roomState.hands[p.id]) ? roomState.hands[p.id].length : 0))} 張</span>
               <span class="badge-ice ${p.isIceBroken ? "broken" : "frozen"}">${p.isIceBroken ? "🔥破冰" : "❄️未破"}</span>
             </div>
             <div style="font-size:0.68rem; color:#94a3b8; margin-top:2px;">
@@ -2803,6 +4188,15 @@
           </div>
         `;
         container.appendChild(card);
+      });
+
+      // 綁定玩家條內的單獨靜音按鈕事件
+      container.querySelectorAll(".btn-peer-mute").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const targetId = btn.getAttribute("data-peer-id");
+          if (targetId) voiceChat.toggleMuteRemotePeer(targetId);
+        };
       });
     }
 
@@ -2825,6 +4219,7 @@
 
     // 清除所有拖曳高亮反饋
     function clearDropHovers() {
+      currentDropHoverEl = null;
       document.querySelectorAll(".drop-hover").forEach(el => el.classList.remove("drop-hover"));
       const boardEl = document.getElementById("felt-board");
       if (boardEl) boardEl.classList.remove("drop-hover-board");
@@ -2832,29 +4227,38 @@
       if (rackDock) rackDock.classList.remove("drop-hover-rack");
     }
 
-    // 拖曳經過各放置目標時高亮
+    // 拖曳經過各放置目標時高亮 (僅在目標切換時異動 class，杜絕閃爍與抖動)
     function updateDropHover(x, y) {
-      clearDropHovers();
       const el = document.elementFromPoint(x, y);
-      if (!el) return;
+      let nextTarget = null;
+      let nextClass = "";
 
-      const card = el.closest(".tile-set-card");
-      if (card) {
-        card.classList.add("drop-hover");
-        return;
+      if (el) {
+        const card = el.closest(".tile-set-card");
+        if (card) {
+          nextTarget = card;
+          nextClass = "drop-hover";
+        } else {
+          const rack = el.closest(".player-rack-dock") || el.closest("#rack-tiles-shelf");
+          if (rack) {
+            nextTarget = document.querySelector(".player-rack-dock");
+            nextClass = "drop-hover-rack";
+          } else {
+            const board = el.closest("#felt-board");
+            if (board) {
+              nextTarget = board;
+              nextClass = "drop-hover-board";
+            }
+          }
+        }
       }
 
-      const rack = el.closest(".player-rack-dock") || el.closest("#rack-tiles-shelf");
-      if (rack) {
-        const dock = document.querySelector(".player-rack-dock");
-        if (dock) dock.classList.add("drop-hover-rack");
-        return;
-      }
+      if (nextTarget === currentDropHoverEl) return;
 
-      const board = el.closest("#felt-board");
-      if (board) {
-        board.classList.add("drop-hover-board");
-        return;
+      clearDropHovers();
+      if (nextTarget && nextClass) {
+        nextTarget.classList.add(nextClass);
+        currentDropHoverEl = nextTarget;
       }
     }
 
@@ -2872,36 +4276,48 @@
       // 目標 A：手牌放置架 (Player Rack)
       const rackEl = dropEl.closest(".player-rack-dock") || dropEl.closest("#rack-tiles-shelf");
       if (rackEl) {
-        // 子情境 A1：手牌內部拖曳換位排序 (支援單張手牌拖曳換位)
+        // 子情境 A1：手牌內部拖曳換位排序 (支援單張手牌拖曳換位並鎖定本地順序)
         if (sourceData.type === "hand" && isSingleTile) {
-          const activeHand = isMyTurn() ? localHand : ((roomState && roomState.hands && roomState.hands[myPlayerId]) || []);
+          if (!Array.isArray(localHand) || localHand.length === 0) {
+            const rawHand = (roomState && roomState.hands && roomState.hands[myPlayerId]) || [];
+            localHand = reconcileHandWithLocalOrder(JSON.parse(JSON.stringify(rawHand)));
+          }
           const shelf = document.getElementById("rack-tiles-shelf");
           const tileEls = Array.from(shelf.querySelectorAll(".rummi-tile"));
-          let insertIndex = activeHand.length;
+          const rotated = isForcedLandscape();
+          let insertIndex = localHand.length;
 
           for (let i = 0; i < tileEls.length; i++) {
             const rect = tileEls[i].getBoundingClientRect();
-            const midX = rect.left + rect.width / 2;
-            if (dropX < midX) {
-              insertIndex = i;
-              break;
+            if (rotated) {
+              // 順時針旋轉 90 度後，手牌由左至右對應視窗由上至下 (Y 軸)
+              const midY = rect.top + rect.height / 2;
+              if (dropY < midY) {
+                insertIndex = i;
+                break;
+              }
+            } else {
+              const midX = rect.left + rect.width / 2;
+              if (dropX < midX) {
+                insertIndex = i;
+                break;
+              }
             }
           }
 
-          const oldIndex = activeHand.findIndex(t => t.id === sourceData.tile.id);
+          const oldIndex = localHand.findIndex(t => t.id === sourceData.tile.id);
           if (oldIndex >= 0) {
-            const [moved] = activeHand.splice(oldIndex, 1);
+            const [moved] = localHand.splice(oldIndex, 1);
             if (oldIndex < insertIndex) insertIndex--;
-            activeHand.splice(insertIndex, 0, moved);
+            localHand.splice(insertIndex, 0, moved);
           }
+
+          lockLocalHandOrder(localHand);
 
           sound.playClick();
           selectedHandTileIds.clear();
           selectedBoardItems = [];
-          if (!isMyTurn() && database && currentRoomId) {
-            database.ref(`rooms/${currentRoomId}/hands/${myPlayerId}`).set(activeHand);
-          }
-          renderGame();
+          renderMyHandRack();
           return;
         }
 
@@ -2921,13 +4337,14 @@
           return;
         }
 
-        // 合法收回手牌：從桌面移除並加回本地手牌
+        // 合法收回手牌：從桌面移除並加回本地手牌（補至最右並鎖定順序）
         localBoard = localBoard.map(set => set.filter(t => !draggedIds.has(t.id))).filter(set => set.length > 0);
         draggedTiles.forEach(tile => {
           if (!localHand.some(t => t.id === tile.id)) {
             localHand.push(tile);
           }
         });
+        lockLocalHandOrder(localHand);
 
         sound.playClick();
         selectedHandTileIds.clear();
@@ -2962,8 +4379,8 @@
           // 從手牌移除拖曳的牌
           localHand = localHand.filter(t => !draggedIds.has(t.id));
 
-          // 目標牌組
-          const targetSet = localBoard[targetSetId];
+          // 目標牌組參考
+          const targetSetRef = localBoard[targetSetId];
 
           // 從其他桌面牌組移除拖曳的牌
           localBoard.forEach((set, sIdx) => {
@@ -2973,15 +4390,19 @@
           });
 
           // 加入目標牌組（避免重複）
-          const currentInTarget = new Set(targetSet.map(t => t.id));
+          const currentInTarget = new Set(targetSetRef.map(t => t.id));
           draggedTiles.forEach(tile => {
             if (!currentInTarget.has(tile.id)) {
-              targetSet.push(tile);
+              targetSetRef.push(tile);
             }
           });
 
-          // 依照數字由小到大自動排序
-          targetSet.sort((a, b) => (a.number || 99) - (b.number || 99));
+          // 使用智慧 Joker 補位演算法自動排序
+          const sortedTarget = sortSetWithJokers(targetSetRef);
+          const refIdx = localBoard.indexOf(targetSetRef);
+          if (refIdx >= 0) {
+            localBoard[refIdx] = sortedTarget;
+          }
 
           // 清理空牌組
           localBoard = localBoard.filter(set => set.length > 0);
@@ -3003,10 +4424,8 @@
         // 從原本牌組移除拖曳的牌
         localBoard = localBoard.map(set => set.filter(t => !draggedIds.has(t.id))).filter(set => set.length > 0);
 
-        // 建立新獨立牌組
-        const newSet = [...draggedTiles];
-        newSet.sort((a, b) => (a.number || 99) - (b.number || 99));
-        localBoard.push(newSet);
+        // 建立新獨立牌組並自動套用 Joker 補位排序
+        localBoard.push(sortSetWithJokers(draggedTiles));
 
         sound.playClick();
         selectedHandTileIds.clear();
@@ -3019,7 +4438,7 @@
       renderGame();
     }
 
-    // 為牌磚綁定 Pointer Events (跨裝置相容觸控與滑鼠，支援手牌橫向滑動與向上拖曳出牌防衝突)
+    // 為牌磚綁定 Pointer Events (跨裝置相容觸控與滑鼠，支援強制橫向座標轉換、手牌橫向滑動與向上拖曳出牌防衝突)
     function setupTilePointerEvents(tileEl, sourceData) {
       tileEl.addEventListener("pointerdown", (e) => {
         // 只響應滑鼠主鍵或觸控
@@ -3042,6 +4461,8 @@
 
         const startX = e.clientX;
         const startY = e.clientY;
+        const localStart = mapClientToLocal(startX, startY);
+        let lastLocalX = localStart.x;
         let isDragging = false;
         let gestureDecided = false;
         let isHorizontalScroll = false;
@@ -3061,31 +4482,48 @@
           draggedTiles = [sourceData.tile];
         }
 
-        const onPointerMove = (moveEvt) => {
-          if (isHorizontalScroll) return; // 判定為手牌橫向捲動時，不觸發拖曳
+        const shelfEl = isHand ? document.getElementById("rack-tiles-shelf") : null;
 
-          const dx = moveEvt.clientX - startX;
-          const dy = moveEvt.clientY - startY;
+        const onPointerMove = (moveEvt) => {
+          const localCurr = mapClientToLocal(moveEvt.clientX, moveEvt.clientY);
+
+          if (isHorizontalScroll) {
+            // 強制旋轉橫向模式下，由程式精準驅動手牌區橫向捲動
+            if (isForcedLandscape() && shelfEl) {
+              moveEvt.preventDefault();
+              shelfEl.scrollLeft -= (localCurr.x - lastLocalX);
+              lastLocalX = localCurr.x;
+            }
+            return;
+          }
+
+          const dx = localCurr.x - localStart.x;
+          const dy = localCurr.y - localStart.y;
           const absDx = Math.abs(dx);
           const absDy = Math.abs(dy);
           const dist = Math.hypot(dx, dy);
 
           if (!gestureDecided) {
             if (isHand && moveEvt.pointerType === "touch") {
-              // 手機觸控手牌區：方向分流判定
+              // 手機觸控手牌區：方向分流判定 (已自動適配強制橫向旋轉座標)
               if (dist >= 6) {
                 gestureDecided = true;
                 if (dy < -10 && absDy > absDx) {
                   // 垂直向上拉動：啟動拖曳出牌
                   isDragging = true;
                   ghostEl = createDragGhost(sourceData.tile, draggedTiles.length);
-                  ghostEl.style.left = `${moveEvt.clientX}px`;
-                  ghostEl.style.top = `${moveEvt.clientY}px`;
-                  document.body.appendChild(ghostEl);
+                  ghostEl.style.left = `${localCurr.x}px`;
+                  ghostEl.style.top = `${localCurr.y}px`;
+                  getViewportRoot().appendChild(ghostEl);
                   tileEl.classList.add("dragging-origin");
                 } else {
-                  // 水平左右滑動 (|deltaX| > |deltaY| 或未達垂直拉動門檻)：交給手牌木架原生橫向捲動
+                  // 水平左右滑動：執行手牌橫向捲動
                   isHorizontalScroll = true;
+                  if (isForcedLandscape() && shelfEl) {
+                    moveEvt.preventDefault();
+                    shelfEl.scrollLeft -= (localCurr.x - lastLocalX);
+                  }
+                  lastLocalX = localCurr.x;
                   return;
                 }
               }
@@ -3095,9 +4533,9 @@
                 gestureDecided = true;
                 isDragging = true;
                 ghostEl = createDragGhost(sourceData.tile, draggedTiles.length);
-                ghostEl.style.left = `${moveEvt.clientX}px`;
-                ghostEl.style.top = `${moveEvt.clientY}px`;
-                document.body.appendChild(ghostEl);
+                ghostEl.style.left = `${localCurr.x}px`;
+                ghostEl.style.top = `${localCurr.y}px`;
+                getViewportRoot().appendChild(ghostEl);
                 tileEl.classList.add("dragging-origin");
               }
             }
@@ -3105,10 +4543,12 @@
 
           if (isDragging && ghostEl) {
             moveEvt.preventDefault();
-            ghostEl.style.left = `${moveEvt.clientX}px`;
-            ghostEl.style.top = `${moveEvt.clientY}px`;
+            ghostEl.style.left = `${localCurr.x}px`;
+            ghostEl.style.top = `${localCurr.y}px`;
             updateDropHover(moveEvt.clientX, moveEvt.clientY);
           }
+
+          lastLocalX = localCurr.x;
         };
 
         const onPointerUp = (upEvt) => {
@@ -3125,10 +4565,10 @@
           }
 
           if (isDragging) {
-            // 執行拖曳放置 (Drag & Drop)
+            // 執行拖曳放置 (Drag & Drop，使用螢幕座標給 elementFromPoint 精準命中)
             handleTileDrop(upEvt.clientX, upEvt.clientY, sourceData, draggedTiles);
           } else if (!isHorizontalScroll) {
-            // 輕點選取判定 (位移小於 5px)
+            // 輕點選取判定 (位移小於 6px)
             const finalDist = Math.hypot(upEvt.clientX - startX, upEvt.clientY - startY);
             if (finalDist < 6) {
               if (isMyTurn()) {
@@ -3152,6 +4592,9 @@
     function renderFeltBoard() {
       const boardEl = document.getElementById("felt-board");
       const emptyHint = document.getElementById("felt-empty-hint");
+
+      // 記住目前公桌捲動位置，避免操作牌組時跳回頂部
+      const prevScrollTop = boardEl.scrollTop;
 
       // 只保留 emptyHint，清空現有牌組卡片
       boardEl.innerHTML = "";
@@ -3206,7 +4649,7 @@
           tilesContainer.appendChild(tileEl);
         });
 
-        // 動作列 (加入此組 / 重新排序)
+        // 動作列 (預留固定按鈕佔位，選取牌磚時不改變卡片寬高避免排組左右抖動)
         const actionsContainer = document.createElement("div");
         actionsContainer.className = "tile-set-actions";
 
@@ -3217,13 +4660,11 @@
           sortBtn.onclick = () => autoSortSet(sIdx);
           actionsContainer.appendChild(sortBtn);
 
-          if (hasSelection) {
-            const addBtn = document.createElement("button");
-            addBtn.className = "btn-set-sub btn-add-here";
-            addBtn.innerText = "➕ 加入此組";
-            addBtn.onclick = () => handleAddToSet(sIdx);
-            actionsContainer.appendChild(addBtn);
-          }
+          const addBtn = document.createElement("button");
+          addBtn.className = `btn-set-sub btn-add-here ${hasSelection ? "" : "btn-add-hidden"}`;
+          addBtn.innerText = "➕ 加入此組";
+          addBtn.onclick = () => handleAddToSet(sIdx);
+          actionsContainer.appendChild(addBtn);
         }
 
         card.innerHTML = headerHtml;
@@ -3233,14 +4674,23 @@
         }
         boardEl.appendChild(card);
       });
+
+      // 恢復捲動位置
+      boardEl.scrollTop = prevScrollTop;
     }
 
-    // 渲染自己的手牌架
+    // 渲染自己的手牌架 (始終依據受保護的本地手牌順序渲染)
     function renderMyHandRack() {
       const shelf = document.getElementById("rack-tiles-shelf");
+      const prevScrollLeft = shelf.scrollLeft;
       shelf.innerHTML = "";
 
-      const myHand = isMyTurn() ? (localHand || []) : ((roomState.hands && roomState.hands[myPlayerId]) || []);
+      let myHand = Array.isArray(localHand) ? localHand : [];
+      if (!isMyTurn() && roomState && roomState.hands && roomState.hands[myPlayerId]) {
+        myHand = reconcileHandWithLocalOrder(JSON.parse(JSON.stringify(roomState.hands[myPlayerId])));
+        localHand = myHand;
+      }
+
       document.getElementById("hand-count-num").innerText = myHand.length;
 
       myHand.forEach((tile, idx) => {
@@ -3250,14 +4700,18 @@
         setupTilePointerEvents(tileEl, { type: "hand", index: idx, tile: tile });
         shelf.appendChild(tileEl);
       });
+
+      shelf.scrollLeft = prevScrollLeft;
     }
 
-    // 建立實體麻將牌磚 DOM 元素
+    // 建立實體麻將牌磚 DOM 元素 (依顏色標示高對比邊框與數字)
     function createTileElement(tile, isSelected = false) {
       const el = document.createElement("div");
-      el.className = `rummi-tile ${isSelected ? "selected" : ""}`;
+      const isJoker = (tile.color === "joker" || tile.number === 0);
+      const colorClass = isJoker ? "tile-color-joker" : `tile-color-${tile.color}`;
+      el.className = `rummi-tile ${colorClass} ${isSelected ? "selected" : ""}`;
 
-      if (tile.color === "joker" || tile.number === 0) {
+      if (isJoker) {
         el.innerHTML = `
           <div class="tile-joker">
             <span class="tile-joker-icon">🃏</span>
@@ -3304,20 +4758,24 @@
     }
 
     // ==========================================
-    // 手牌排序工具
+    // 手牌排序工具 (鎖定本地排序狀態 localHandOrder)
     // ==========================================
     // 依數字排序 (777)
     function sortHandByNumber() {
       sound.playClick();
+      const colorOrder = { black: 1, red: 2, blue: 3, orange: 4, joker: 5 };
       const sorter = (a, b) => {
         if (a.color === "joker" || a.number === 0) return 1;
         if (b.color === "joker" || b.number === 0) return -1;
         if (a.number !== b.number) return a.number - b.number;
-        return a.color.localeCompare(b.color);
+        return (colorOrder[a.color] || 0) - (colorOrder[b.color] || 0);
       };
-      if (Array.isArray(localHand)) localHand.sort(sorter);
-      if (roomState && roomState.hands && Array.isArray(roomState.hands[myPlayerId])) {
-        roomState.hands[myPlayerId].sort(sorter);
+      if ((!Array.isArray(localHand) || localHand.length === 0) && roomState && roomState.hands && roomState.hands[myPlayerId]) {
+        localHand = JSON.parse(JSON.stringify(roomState.hands[myPlayerId]));
+      }
+      if (Array.isArray(localHand)) {
+        localHand.sort(sorter);
+        lockLocalHandOrder(localHand);
       }
       renderMyHandRack();
     }
@@ -3332,9 +4790,12 @@
         if (a.color !== b.color) return (colorOrder[a.color] || 0) - (colorOrder[b.color] || 0);
         return a.number - b.number;
       };
-      if (Array.isArray(localHand)) localHand.sort(sorter);
-      if (roomState && roomState.hands && Array.isArray(roomState.hands[myPlayerId])) {
-        roomState.hands[myPlayerId].sort(sorter);
+      if ((!Array.isArray(localHand) || localHand.length === 0) && roomState && roomState.hands && roomState.hands[myPlayerId]) {
+        localHand = JSON.parse(JSON.stringify(roomState.hands[myPlayerId]));
+      }
+      if (Array.isArray(localHand)) {
+        localHand.sort(sorter);
+        lockLocalHandOrder(localHand);
       }
       renderMyHandRack();
     }
@@ -3539,13 +5000,54 @@
         document.getElementById("modal-rules").style.display = "flex";
       };
 
+      // 麥克風開關按鈕 (頂部功能列與等待室同步控制，預設靜音；點擊事件中同步喚醒 AudioContext 供 iOS Safari 使用)
+      const headerMicBtn = document.getElementById("btn-mic-toggle");
+      if (headerMicBtn) headerMicBtn.onclick = () => {
+        voiceChat.unlockRemoteAudio();
+        voiceChat.toggleMic();
+      };
+      const waitingMicBtn = document.getElementById("btn-waiting-mic-toggle");
+      if (waitingMicBtn) waitingMicBtn.onclick = () => {
+        voiceChat.unlockRemoteAudio();
+        voiceChat.toggleMic();
+      };
+      voiceChat.updateMicButtonsUI();
+
+      // 手機強制橫向模式下，讓公桌區域支援順暢的旋轉軸向觸控捲動
+      const feltBoardEl = document.getElementById("felt-board");
+      if (feltBoardEl) {
+        let boardScrollLastY = null;
+        feltBoardEl.addEventListener("pointerdown", (e) => {
+          if (!isForcedLandscape() || e.pointerType !== "touch") return;
+          if (e.target && e.target.closest && e.target.closest(".rummi-tile, button")) return;
+          boardScrollLastY = mapClientToLocal(e.clientX, e.clientY).y;
+        }, { passive: true });
+        feltBoardEl.addEventListener("pointermove", (e) => {
+          if (boardScrollLastY === null || !isForcedLandscape() || e.pointerType !== "touch") return;
+          const currLocalY = mapClientToLocal(e.clientX, e.clientY).y;
+          feltBoardEl.scrollTop -= (currLocalY - boardScrollLastY);
+          boardScrollLastY = currLocalY;
+          e.preventDefault();
+        }, { passive: false });
+        const stopBoardScroll = () => { boardScrollLastY = null; };
+        feltBoardEl.addEventListener("pointerup", stopBoardScroll, { passive: true });
+        feltBoardEl.addEventListener("pointercancel", stopBoardScroll, { passive: true });
+      }
+
+      // 使用者互動時同步喚醒 AudioContext 與遠端音訊播放 (確保手機 Safari / Chrome 正常播放遠端語音)
+      document.addEventListener("pointerdown", () => voiceChat.unlockRemoteAudio(), { passive: true });
+      document.addEventListener("touchend", () => voiceChat.unlockRemoteAudio(), { passive: true });
+      document.addEventListener("click", () => voiceChat.unlockRemoteAudio(), { passive: true });
+      window.addEventListener("beforeunload", () => voiceChat.leaveRoom());
+
       // 離開房間事件 (Header 與等待室彈窗)
       document.getElementById("btn-leave-room").onclick = leaveRoom;
       const waitingLeaveBtn = document.getElementById("btn-waiting-leave");
       if (waitingLeaveBtn) waitingLeaveBtn.onclick = leaveRoom;
 
-      // 加入房間按鈕
+      // 加入房間按鈕 (同步喚醒 AudioContext 確保進房即能播放他人語音)
       document.getElementById("btn-enter-room").onclick = () => {
+        voiceChat.unlockRemoteAudio();
         const nick = document.getElementById("input-nickname").value.trim();
         const rId = document.getElementById("input-roomid").value.trim();
         if (!nick) {
@@ -3560,7 +5062,10 @@
       };
 
       // 房主開局按鈕
-      document.getElementById("btn-start-game").onclick = startGameByHost;
+      document.getElementById("btn-start-game").onclick = () => {
+        voiceChat.unlockRemoteAudio();
+        startGameByHost();
+      };
 
       // 房主添加模擬玩家
       document.getElementById("btn-add-bot").onclick = addBotPlayer;
