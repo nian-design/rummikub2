@@ -6,7 +6,12 @@
   <title>線上多人連線拉密 Rummikub (2-6人)</title>
   <meta name="description" content="2至6人線上多人連線拉密網頁遊戲，支援即時連線、破冰驗證、雙模式計時器、手機點擊操作與音效。">
 
-  <!-- Firebase Compat SDK (CDN) -->
+  <!-- Google Fonts: Noto Sans TC (僅載入 400 標準與 500 中等字重) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Firebase Compat SDK v10+ (CDN: firebase-app + firebase-database) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
@@ -37,13 +42,26 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       background: radial-gradient(circle at 50% 35%, var(--felt-green-light) 0%, var(--felt-green-mid) 50%, var(--felt-green-dark) 100%);
       color: #f8fafc;
       min-height: 100vh;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
+    }
+
+    button, input, select {
+      font-family: inherit;
+      letter-spacing: inherit;
+    }
+
+    strong, b {
+      font-weight: 400;
     }
 
     /* 根視窗容器 (電腦版透明無影響；手機直向時強制旋轉為橫向) */
@@ -82,15 +100,15 @@
       height: 34px;
       background: linear-gradient(135deg, #fef08a, #f59e0b);
       color: #78350f;
-      font-weight: 900;
+      font-weight: 500;
       border-radius: 8px;
       font-size: 19px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.4);
     }
     .brand-title {
       font-size: 1.1rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
       color: #fef3c7;
     }
     .brand-sub {
@@ -124,7 +142,7 @@
       background: rgba(220, 38, 38, 0.25);
       border-color: rgba(239, 68, 68, 0.45);
       color: #fca5a5;
-      font-weight: 700;
+      font-weight: 400;
     }
     .btn-icon.btn-leave:hover {
       background: rgba(220, 38, 38, 0.55);
@@ -137,7 +155,7 @@
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.25);
       color: #cbd5e1;
-      font-weight: 700;
+      font-weight: 400;
     }
     .btn-icon.btn-mic-toggle.mic-on {
       background: rgba(22, 163, 74, 0.35);
@@ -338,7 +356,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
+      font-weight: 400;
       font-size: 1rem;
       border: 2px solid rgba(255,255,255,0.4);
       flex-shrink: 0;
@@ -349,7 +367,7 @@
     }
     .player-name {
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 400;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -367,7 +385,7 @@
       padding: 1px 5px;
       border-radius: 4px;
       font-size: 0.68rem;
-      font-weight: 700;
+      font-weight: 400;
     }
     .badge-ice.broken {
       background: #15803d;
@@ -388,7 +406,7 @@
       padding: 5px 12px;
       border-radius: 14px;
       font-size: 0.85rem;
-      font-weight: 800;
+      font-weight: 400;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
       white-space: nowrap;
       animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
@@ -432,14 +450,14 @@
     }
     .highlight-val {
       color: #facc15;
-      font-weight: 700;
+      font-weight: 400;
     }
 
     .btn-action-primary {
       background: linear-gradient(135deg, #eab308, #ca8a04);
       color: #713f12;
       border: none;
-      font-weight: 800;
+      font-weight: 500;
       padding: 8px 16px;
       border-radius: 8px;
       cursor: pointer;
@@ -531,7 +549,7 @@
       padding-bottom: 4px;
     }
     .set-tag {
-      font-weight: 700;
+      font-weight: 400;
       padding: 1px 6px;
       border-radius: 4px;
       font-size: 0.68rem;
@@ -576,7 +594,7 @@
       background: #0284c7;
       border-color: #38bdf8;
       color: #ffffff;
-      font-weight: bold;
+      font-weight: 500;
     }
     .btn-set-sub.btn-add-hidden {
       visibility: hidden;
@@ -647,7 +665,7 @@
       background: #ef4444;
       color: #ffffff;
       font-size: 0.72rem;
-      font-weight: 900;
+      font-weight: 400;
       border-radius: 999px;
       padding: 2px 8px;
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
@@ -679,9 +697,9 @@
 
     .tile-num {
       font-size: 1.4rem;
-      font-weight: 900;
+      font-weight: 500;
       line-height: 1;
-      font-family: Impact, "Arial Black", sans-serif;
+      letter-spacing: 0;
     }
     .tile-num.color-black { color: var(--tile-color-black); }
     .tile-num.color-red {
@@ -717,12 +735,13 @@
     }
     .tile-joker-icon {
       font-size: 1.4rem;
+      font-weight: 500;
       line-height: 1;
     }
     .tile-joker-text {
       font-size: 0.6rem;
-      font-weight: 900;
-      letter-spacing: 0.5px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
       background: linear-gradient(90deg, #dc2626, #2563eb);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -766,7 +785,7 @@
       border-radius: 6px;
       font-size: 0.78rem;
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 400;
       transition: all 0.2s;
     }
     .rack-btn-sort:hover {
@@ -785,7 +804,7 @@
       padding: 7px 14px;
       border-radius: 8px;
       font-size: 0.88rem;
-      font-weight: bold;
+      font-weight: 400;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -802,7 +821,7 @@
       padding: 7px 18px;
       border-radius: 8px;
       font-size: 0.92rem;
-      font-weight: 800;
+      font-weight: 500;
       cursor: pointer;
       border: none;
       transition: all 0.2s ease;
@@ -847,7 +866,7 @@
       padding: 3px 8px;
       border-radius: 6px;
       font-size: 0.72rem;
-      font-weight: 700;
+      font-weight: 400;
       cursor: pointer;
       margin-left: 8px;
       transition: all 0.15s;
@@ -899,7 +918,7 @@
       background: linear-gradient(to right, transparent, rgba(15, 23, 42, 0.88));
       color: rgba(250, 204, 21, 0.85);
       font-size: 1.25rem;
-      font-weight: 900;
+      font-weight: 400;
       pointer-events: none;
       border-top-right-radius: 8px;
       border-bottom-right-radius: 8px;
@@ -930,14 +949,14 @@
       padding: 6px 20px;
       border-radius: 9999px;
       font-size: 0.94rem;
-      font-weight: 800;
+      font-weight: 400;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       pointer-events: auto;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.02em;
     }
     .timer-capsule.my-turn {
       border-color: #facc15;
@@ -959,7 +978,7 @@
       font-size: 1.15rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       color: #facc15;
-      font-weight: 900;
+      font-weight: 500;
     }
     .timer-capsule.alert .capsule-sec {
       color: #ffffff;
@@ -1007,8 +1026,8 @@
       font-size: 0.72rem;
       color: #94a3b8;
       margin-bottom: 8px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
     }
     .emoji-popover-items {
       display: flex;
@@ -1022,7 +1041,7 @@
       padding: 5px 9px;
       border-radius: 10px;
       font-size: 0.8rem;
-      font-weight: 700;
+      font-weight: 400;
       cursor: pointer;
       transition: all 0.15s;
     }
@@ -1055,15 +1074,14 @@
     }
     .big-cd-label {
       font-size: 1.1rem;
-      font-weight: 900;
+      font-weight: 400;
       color: #fee2e2;
-      letter-spacing: 1px;
+      letter-spacing: 0.02em;
     }
     .big-cd-number {
       font-size: 2.8rem;
-      font-weight: 900;
+      font-weight: 500;
       color: #ffffff;
-      font-family: Impact, "Arial Black", sans-serif;
       text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     }
 
@@ -1098,7 +1116,7 @@
     }
     .modal-title {
       font-size: 1.3rem;
-      font-weight: 800;
+      font-weight: 500;
       color: #fef08a;
       margin-bottom: 12px;
       display: flex;
@@ -1111,7 +1129,7 @@
     .form-label {
       display: block;
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 400;
       color: #cbd5e1;
       margin-bottom: 6px;
     }
@@ -1152,7 +1170,7 @@
       border: none;
       padding: 10px 18px;
       border-radius: 8px;
-      font-weight: 600;
+      font-weight: 400;
       cursor: pointer;
     }
     .btn-primary {
@@ -1161,7 +1179,7 @@
       border: none;
       padding: 10px 22px;
       border-radius: 8px;
-      font-weight: 800;
+      font-weight: 500;
       cursor: pointer;
       font-size: 1rem;
     }
@@ -1178,7 +1196,7 @@
       color: #94a3b8;
       padding: 8px;
       text-align: left;
-      font-weight: 600;
+      font-weight: 400;
     }
     .leaderboard-table td {
       padding: 10px 8px;
@@ -1187,7 +1205,7 @@
     }
     .leaderboard-table tr:first-child td {
       color: #facc15;
-      font-weight: 800;
+      font-weight: 400;
     }
 
     /* 房間大廳等待清單 */
@@ -1487,7 +1505,7 @@
   <div class="player-rack-dock" id="player-rack-dock">
     <div class="rack-header">
       <div class="rack-tools">
-        <span style="font-size:0.85rem; font-weight:bold; color:#fef08a; margin-right:4px;">
+        <span style="font-size:0.85rem; font-weight:500; color:#fef08a; margin-right:4px;">
           我的手牌 (<span id="hand-count-num">0</span>)
         </span>
         <button class="rack-btn-sort" id="btn-sort-num">777 依數字排序</button>
@@ -1564,7 +1582,7 @@
         <button class="btn-icon btn-mic-toggle" id="btn-waiting-mic-toggle" title="切換麥克風開關">🔇 麥克風關</button>
       </div>
       <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:12px;">
-        房號：<span id="waiting-room-id" style="color:#facc15; font-weight:bold; font-size:1.1rem;"></span>
+        房號：<span id="waiting-room-id" style="color:#facc15; font-weight:400; font-size:1.1rem;"></span>
       </p>
 
       <div class="form-label">目前已加入玩家 (<span id="waiting-count">0</span> / 6 人)：</div>
@@ -1587,7 +1605,7 @@
       </div>
 
       <div class="modal-footer" style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <button class="btn-secondary" id="btn-waiting-leave" style="background:#dc2626; color:#ffffff; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+        <button class="btn-secondary" id="btn-waiting-leave" style="background:#dc2626; color:#ffffff; border:none; padding:10px 18px; border-radius:8px; font-weight:400; cursor:pointer;">
           🚪 離開房間
         </button>
         <div style="display:flex; gap:8px; align-items:center;">
@@ -1623,7 +1641,7 @@
       </table>
 
       <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <button class="btn-secondary" id="btn-gameover-leave" style="background:#dc2626; color:#ffffff; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+        <button class="btn-secondary" id="btn-gameover-leave" style="background:#dc2626; color:#ffffff; border:none; padding:10px 18px; border-radius:8px; font-weight:400; cursor:pointer;">
           🚪 離開房間 (返回首頁)
         </button>
         <button class="btn-primary" id="btn-restart-game">
@@ -1682,49 +1700,53 @@
        ============================================================ -->
   <script>
     // ==========================================
-    // 【Firebase 連線設定區】
-    // 請至 Firebase Console (https://console.firebase.google.com/) 建立專案
-    // 並開啟 Realtime Database（即時資料庫，規則設為 read/write: true 即可測試）
-    // 將您的 Firebase 網頁設定貼在下方物件中即可線上多人連線！
+    // 【專屬 Firebase Realtime Database 跨裝置連線設定】
+    // 全程使用 Firebase Realtime Database 進行房間狀態同步、onDisconnect() 斷線清理
+    // 以及 rooms/{roomId}/webrtcSignals 麥克風語音訊號交換
     // ==========================================
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyA4g8u0UQzsl4SoQNnSixIR50kKmR4nbCE",
+      authDomain: "nian-808a9.firebaseapp.com",
+      databaseURL: "https://nian-808a9-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "nian-808a9",
+      storageBucket: "nian-808a9.firebasestorage.app",
+      messagingSenderId: "959563031284",
+      appId: "1:959563031284:web:ecfbca1c8c058c7c8b74a1",
+      measurementId: "G-BHQBQJKFMZ"
     };
 
-    // 檢查是否已設定真實 Firebase
-    const isFirebaseConfigured = Boolean(
-      firebaseConfig.apiKey &&
-      firebaseConfig.apiKey !== "YOUR_API_KEY" &&
-      firebaseConfig.databaseURL &&
-      !firebaseConfig.databaseURL.includes("YOUR_PROJECT_ID")
-    );
-
     let database = null;
-    let syncChannel = null;
+    let firebaseServerTimeOffset = 0;
 
-    if (isFirebaseConfigured && window.firebase) {
+    if (window.firebase) {
       try {
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
         database = firebase.database();
+        // 監聽 Firebase 伺服器時間差，確保跨裝置 (手機 4G/5G 與電腦 Wi-Fi) 倒數計時完全同步
+        database.ref(".info/serverTimeOffset").on("value", (snap) => {
+          const offset = snap.val();
+          if (typeof offset === "number" && !isNaN(offset)) {
+            firebaseServerTimeOffset = offset;
+          }
+        });
         console.log("Firebase Realtime Database 初始化成功！");
       } catch (e) {
-        console.error("Firebase 初始化失敗，切換至本地廣播模式", e);
+        console.error("Firebase Realtime Database 初始化失敗:", e);
       }
+    } else {
+      console.error("Firebase SDK 尚未載入，請檢查網路連線。");
     }
 
-    // 本地跨分頁模擬通道 (BroadcastChannel / LocalStorage)
-    if (!database) {
-      try {
-        syncChannel = new BroadcastChannel("rummikub_local_sync");
-      } catch (e) {
-        console.warn("BroadcastChannel not supported", e);
-      }
+    // 取得與 Firebase 伺服器同步之基準時間戳
+    function getServerNow() {
+      return Date.now() + firebaseServerTimeOffset;
+    }
+
+    // 房號安全鍵值轉換 (確保房號符合 Firebase Realtime Database 路徑規範，數字房號如 1234 維持原貌)
+    function getSafeRoomKey(roomId) {
+      return encodeURIComponent(String(roomId || "").trim()).replace(/[.#$\[\]\/]/g, "_");
     }
 
     // ==========================================
@@ -1884,8 +1906,7 @@
         this.vadInterval = null;
         this.signalRef = null;
         this.signalHandler = null;
-        this.rtcChannel = null;
-        this.customSignalingAdapter = null; // 預留 WebSocket / 自訂伺服器 Signaling 轉發接口
+        this.customSignalingAdapter = null;
         this.iceServers = [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
@@ -1893,7 +1914,6 @@
         ];
       }
 
-      // 預留外部連線模組接口 (可抽換為 WebSocket / Socket.IO / MQTT)
       setSignalingAdapter(adapter) {
         this.customSignalingAdapter = adapter || null;
       }
@@ -1936,7 +1956,7 @@
 
         this.roomId = roomId;
         this.active = true;
-        this.joinedAt = Date.now() - 5000;
+        this.joinedAt = getServerNow() - 5000;
         this.micEnabled = false;
         this.micPermissionDenied = false;
 
@@ -1945,28 +1965,19 @@
           return;
         }
 
-        // 建立 Signaling 通道 (Firebase Realtime Database 優先，否則使用本地 BroadcastChannel)
+        // 使用 Firebase Realtime Database 路徑 rooms/{roomId}/webrtcSignals/{myPlayerId} 作為 WebRTC Signaling 通道
+        const safeRoomKey = getSafeRoomKey(roomId);
         if (database) {
-          this.signalRef = database.ref(`rtc_signals/${roomId}/${myPlayerId}`);
+          this.signalRef = database.ref(`rooms/${safeRoomKey}/webrtcSignals/${myPlayerId}`);
           try {
             this.signalRef.onDisconnect().remove();
           } catch (e) {}
-          // 同步監聽新信令 (不主動 remove 整個節點，避免清掉剛送達的 Offer；改以時間戳過濾過期舊信令)
           this.signalHandler = (snap) => {
             const msg = snap.val();
             snap.ref.remove().catch(() => {});
             if (msg) this.handleSignal(msg);
           };
           this.signalRef.on("child_added", this.signalHandler);
-        } else if (typeof BroadcastChannel !== "undefined") {
-          this.rtcChannel = new BroadcastChannel("rummikub_rtc_sync");
-          this.rtcChannel.onmessage = (event) => {
-            const msg = event.data;
-            if (!msg || !this.active) return;
-            if (msg.roomId === this.roomId && msg.to === myPlayerId) {
-              this.handleSignal(msg);
-            }
-          };
         }
 
         this.startVadLoop();
@@ -2015,7 +2026,7 @@
           from: myPlayerId,
           to: targetPeerId,
           roomId: this.roomId,
-          ts: Date.now(),
+          ts: getServerNow(),
           ...payload
         };
 
@@ -2024,30 +2035,22 @@
             this.customSignalingAdapter.send(msg);
           } catch (e) {}
         } else if (database) {
-          database.ref(`rtc_signals/${this.roomId}/${targetPeerId}`).push(msg).catch(() => {});
-        } else if (this.rtcChannel) {
-          try {
-            this.rtcChannel.postMessage(msg);
-          } catch (e) {}
+          database.ref(`rooms/${getSafeRoomKey(this.roomId)}/webrtcSignals/${targetPeerId}`).push(msg).catch(() => {});
         }
       }
 
       broadcastMicStatus() {
         if (!this.active || !this.roomId) return;
-        // 透過信令通道即時廣播給同房所有連線玩家
+        // 透過 Firebase webrtcSignals 通道即時通知同房所有連線玩家
         this.peers.forEach((_, peerId) => {
           this.sendSignal(peerId, { type: "mic-status", micOn: this.micEnabled });
         });
-        // 同步寫入房間玩家的 micOn 欄位 (僅局部更新，絕不覆蓋牌桌與手牌狀態)
+        // 同步更新房間玩家的 micOn 欄位 (局部更新，絕不覆蓋牌桌、手牌與 webrtcSignals)
         if (roomState && roomState.players && roomState.players[myPlayerId]) {
           roomState.players[myPlayerId].micOn = this.micEnabled;
         }
         if (database) {
-          database.ref(`rooms/${this.roomId}/players/${myPlayerId}/micOn`).set(this.micEnabled).catch(() => {});
-        } else if (roomState) {
-          try {
-            localStorage.setItem(`rummikub_room_${this.roomId}`, JSON.stringify(roomState));
-          } catch (e) {}
+          database.ref(`rooms/${getSafeRoomKey(this.roomId)}/players/${myPlayerId}/micOn`).set(this.micEnabled).catch(() => {});
         }
         this.updatePeerVoiceBadges(myPlayerId);
       }
@@ -2175,7 +2178,8 @@
 
       async handleSignal(msg) {
         if (!this.active || !msg || !msg.from || msg.from === myPlayerId) return;
-        if (msg.ts && (Date.now() - msg.ts > 45000 || (this.joinedAt && msg.ts < this.joinedAt))) return;
+        // 過濾超過 2 分鐘之殘留過期信令 (使用 Firebase 伺服器同步時間)
+        if (msg.ts && Math.abs(getServerNow() - msg.ts) > 120000) return;
         const fromId = msg.from;
 
         if (msg.type === "mic-status") {
@@ -2356,11 +2360,7 @@
         this.micEnabled = true;
         this.updateMicButtonsUI();
         this.broadcastMicStatus();
-        if (!database && !this.customSignalingAdapter) {
-          updateNotice("🎤 本機麥克風收音模擬已開啟（對著麥克風說話可測試頭像綠光；填入 Firebase 設定即可跨裝置即時通話）", "info");
-        } else {
-          updateNotice("🎤 麥克風已開啟，同房玩家現在可以聽見您的聲音", "info");
-        }
+        updateNotice("🎤 麥克風已開啟，同房玩家現在可以聽見您的聲音", "info");
       }
 
       // 單獨靜音 / 解除靜音某位遠端玩家 (僅影響自己本地端)
@@ -2581,15 +2581,11 @@
         if (this.signalRef) {
           try {
             if (this.signalHandler) this.signalRef.off("child_added", this.signalHandler);
+            this.signalRef.onDisconnect().cancel().catch(() => {});
             this.signalRef.remove().catch(() => {});
           } catch (e) {}
           this.signalRef = null;
           this.signalHandler = null;
-        }
-
-        if (this.rtcChannel) {
-          try { this.rtcChannel.close(); } catch (e) {}
-          this.rtcChannel = null;
         }
 
         const audioContainer = document.getElementById("voice-audio-container");
@@ -2609,13 +2605,14 @@
     const COLORS = ["black", "red", "blue", "orange"];
     const COLOR_LABELS = { black: "黑", red: "紅", blue: "藍", orange: "橘" };
 
-    let myPlayerId = localStorage.getItem("rummikub_player_id");
+    // 每個分頁 / 裝置使用獨立 sessionStorage 玩家識別碼，避免同機多分頁測試 ID 碰撞，且重新整理可保持身分
+    let myPlayerId = sessionStorage.getItem("rummikub_player_id");
     if (!myPlayerId) {
-      myPlayerId = "p_" + Math.random().toString(36).substring(2, 9);
-      localStorage.setItem("rummikub_player_id", myPlayerId);
+      myPlayerId = "p_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36).slice(-4);
+      sessionStorage.setItem("rummikub_player_id", myPlayerId);
     }
     let myPlayerName = localStorage.getItem("rummikub_player_name") || "";
-    let currentRoomId = localStorage.getItem("rummikub_room_id") || "";
+    let currentRoomId = sessionStorage.getItem("rummikub_room_id") || "";
 
     // 本地即時遊戲狀態
     let roomState = null;
@@ -2901,7 +2898,7 @@
     }
 
     // ==========================================
-    // 網路連線與房間管理 (Firebase / Local Sync)
+    // 網路連線與房間管理 (Firebase Realtime Database 跨裝置即時同步)
     // ==========================================
     function updateNotice(text, type = "info") {
       const bar = document.getElementById("notice-bar");
@@ -2909,197 +2906,348 @@
       bar.innerHTML = `<span>${text}</span>`;
     }
 
-    // 自動清理過期房間 (超過 3 小時未更新或玩家數為 0 的空房間)
-    async function cleanExpiredRooms() {
-      const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
-      const now = Date.now();
+    // Firebase 房間監聽與斷線清理控制狀態
+    let activeFirebaseRoomRef = null;
+    let activeFirebaseRoomHandler = null;
+    let activeConnectedRef = null;
+    let activeConnectedHandler = null;
+    let activeDisconnectPlayerRef = null;
+    let activeDisconnectSignalRef = null;
+    let lastAppliedRoomJson = "";
+    let isJoiningRoom = false;
+    let isRecoveringDisconnect = false;
 
-      if (database) {
-        try {
-          const snap = await database.ref("rooms").once("value");
-          const allRooms = snap.val();
-          if (allRooms && typeof allRooms === "object") {
-            const updates = {};
-            Object.keys(allRooms).forEach(rId => {
-              const r = allRooms[rId];
-              if (!r) {
-                updates[`rooms/${rId}`] = null;
-                return;
-              }
-              const lastActive = r.updatedAt || r.turnStartTime || r.createdAt || 0;
-              const hasNoPlayers = !r.players || Object.keys(r.players).length === 0;
-              if (hasNoPlayers || (now - lastActive > THREE_HOURS_MS)) {
-                updates[`rooms/${rId}`] = null;
-              }
-            });
-            if (Object.keys(updates).length > 0) {
-              await database.ref().update(updates);
-            }
-          }
-        } catch (err) {
-          console.warn("清理過期房間異常:", err);
-        }
-      } else {
-        try {
-          const keysToRemove = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith("rummikub_room_") && key !== "rummikub_room_id") {
-              const raw = localStorage.getItem(key);
-              if (raw) {
-                try {
-                  const r = JSON.parse(raw);
-                  if (r && typeof r === "object") {
-                    const lastActive = r.updatedAt || r.turnStartTime || r.createdAt || 0;
-                    const hasNoPlayers = !r.players || Object.keys(r.players).length === 0;
-                    if (hasNoPlayers || (now - lastActive > THREE_HOURS_MS)) {
-                      keysToRemove.push(key);
-                    }
-                  }
-                } catch (parseErr) {}
-              }
-            }
-          }
-          keysToRemove.forEach(k => localStorage.removeItem(k));
-        } catch (err) {
-          console.warn("本地清理過期房間異常:", err);
-        }
+    function isValidActiveRoom(r) {
+      if (!r || typeof r !== "object" || !r.players || typeof r.players !== "object") return false;
+      const playerCount = Object.keys(r.players).length;
+      if (playerCount === 0) return false;
+      const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+      const lastActive = r.updatedAt || r.turnStartTime || r.createdAt || 0;
+      if (lastActive && (getServerNow() - lastActive > THREE_HOURS_MS)) return false;
+      return true;
+    }
+
+    // 正規化 Firebase 快照資料 (補齊被 Firebase 自動移除之空陣列，並排除 webrtcSignals 避免信令觸發重複重繪)
+    function normalizeFirebaseRoomState(raw) {
+      if (!raw || typeof raw !== "object") return null;
+      const players = (raw.players && typeof raw.players === "object") ? raw.players : {};
+      const rawHands = (raw.hands && typeof raw.hands === "object") ? raw.hands : {};
+      const hands = {};
+      Object.keys(rawHands).forEach(pid => {
+        const h = rawHands[pid];
+        hands[pid] = Array.isArray(h) ? h.filter(Boolean) : (h && typeof h === "object" ? Object.values(h).filter(Boolean) : []);
+      });
+
+      const rawBoard = raw.board;
+      const boardArr = Array.isArray(rawBoard)
+        ? rawBoard
+        : (rawBoard && typeof rawBoard === "object" ? Object.values(rawBoard) : []);
+      const board = boardArr
+        .map(set => Array.isArray(set) ? set.filter(Boolean) : (set && typeof set === "object" ? Object.values(set).filter(Boolean) : []))
+        .filter(set => set.length > 0);
+
+      const rawDeck = raw.deck;
+      const deck = Array.isArray(rawDeck)
+        ? rawDeck.filter(Boolean)
+        : (rawDeck && typeof rawDeck === "object" ? Object.values(rawDeck).filter(Boolean) : []);
+
+      return {
+        roomId: raw.roomId || currentRoomId || "",
+        createdAt: raw.createdAt || 0,
+        updatedAt: raw.updatedAt || 0,
+        version: raw.version || 0,
+        _lastSenderId: raw._lastSenderId || "",
+        status: raw.status || "waiting",
+        hostId: raw.hostId || null,
+        winnerId: raw.winnerId || null,
+        turnTimeLimit: raw.turnTimeLimit || 60,
+        currentTurnPlayerId: raw.currentTurnPlayerId || null,
+        turnStartTime: raw.turnStartTime || null,
+        deck: deck,
+        board: board,
+        players: players,
+        hands: hands,
+        lastChat: raw.lastChat || null
+      };
+    }
+
+    // 取消目前已註冊之 Firebase onDisconnect() 處理器
+    function cancelPlayerDisconnectHandlers() {
+      if (activeConnectedRef && activeConnectedHandler) {
+        try { activeConnectedRef.off("value", activeConnectedHandler); } catch (e) {}
+      }
+      activeConnectedRef = null;
+      activeConnectedHandler = null;
+
+      if (activeDisconnectPlayerRef) {
+        try { activeDisconnectPlayerRef.onDisconnect().cancel().catch(() => {}); } catch (e) {}
+        activeDisconnectPlayerRef = null;
+      }
+      if (activeDisconnectSignalRef) {
+        try { activeDisconnectSignalRef.onDisconnect().cancel().catch(() => {}); } catch (e) {}
+        activeDisconnectSignalRef = null;
       }
     }
 
-    // 儲存/同步房間狀態
-    function syncRoomState(newState) {
-      if (!newState) return;
-      newState.updatedAt = Date.now();
-      roomState = newState;
-      if (database && currentRoomId) {
-        database.ref(`rooms/${currentRoomId}`).set(newState);
-      } else {
-        localStorage.setItem(`rummikub_room_${currentRoomId}`, JSON.stringify(newState));
-        if (syncChannel) {
-          syncChannel.postMessage({ type: "ROOM_UPDATE", roomId: currentRoomId, state: newState });
+    // 註冊 Firebase onDisconnect() 機制：若玩家直接關閉網頁或網路斷線，自動清理該玩家在房間內的殘留狀態
+    function registerPlayerDisconnectHandlers(roomId) {
+      cancelPlayerDisconnectHandlers();
+      if (!database || !roomId) return;
+
+      const safeRoomKey = getSafeRoomKey(roomId);
+      const playerRef = database.ref(`rooms/${safeRoomKey}/players/${myPlayerId}`);
+      const signalRef = database.ref(`rooms/${safeRoomKey}/webrtcSignals/${myPlayerId}`);
+      activeDisconnectPlayerRef = playerRef;
+      activeDisconnectSignalRef = signalRef;
+
+      const bindDisconnectOps = () => {
+        try {
+          playerRef.onDisconnect().remove();
+          signalRef.onDisconnect().remove();
+        } catch (e) {}
+      };
+
+      // 立即綁定一次，並監聽 .info/connected 確保手機切換 Wi-Fi/4G/5G 重連後自動重新註冊
+      bindDisconnectOps();
+      activeConnectedRef = database.ref(".info/connected");
+      activeConnectedHandler = (snap) => {
+        if (snap.val() === true && currentRoomId === roomId) {
+          bindDisconnectOps();
         }
+      };
+      activeConnectedRef.on("value", activeConnectedHandler);
+    }
+
+    // 自動清理超過 3 小時未更新或空房間
+    async function cleanExpiredRooms() {
+      if (!database) return;
+      const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+      const now = getServerNow();
+      try {
+        const snap = await database.ref("rooms").once("value");
+        const allRooms = snap.val();
+        if (allRooms && typeof allRooms === "object") {
+          const updates = {};
+          Object.keys(allRooms).forEach(rId => {
+            const r = allRooms[rId];
+            if (!r) {
+              updates[`rooms/${rId}`] = null;
+              return;
+            }
+            const lastActive = r.updatedAt || r.turnStartTime || r.createdAt || 0;
+            const hasNoPlayers = !r.players || Object.keys(r.players).length === 0;
+            if (hasNoPlayers || (now - lastActive > THREE_HOURS_MS)) {
+              updates[`rooms/${rId}`] = null;
+            }
+          });
+          if (Object.keys(updates).length > 0) {
+            await database.ref().update(updates);
+          }
+        }
+      } catch (err) {
+        // 若資料庫規則限制根節點讀取，靜默忽略不影響單房讀寫
       }
+    }
+
+    // 卸載目前的 Firebase 房間監聽與斷線清理器
+    function detachRoomListener() {
+      cancelPlayerDisconnectHandlers();
+      if (activeFirebaseRoomRef && activeFirebaseRoomHandler) {
+        try { activeFirebaseRoomRef.off("value", activeFirebaseRoomHandler); } catch (e) {}
+      }
+      activeFirebaseRoomRef = null;
+      activeFirebaseRoomHandler = null;
+      lastAppliedRoomJson = "";
+    }
+
+    // 即時將遊戲狀態寫入 Firebase rooms/{roomId} (使用 update 保留 webrtcSignals 語音訊號節點)
+    function syncRoomState(newState) {
+      if (!newState || !currentRoomId || !database) return;
+      newState.version = (newState.version || 0) + 1;
+      newState.updatedAt = getServerNow();
+      newState._lastSenderId = myPlayerId;
+      roomState = newState;
+
+      const payload = {
+        roomId: newState.roomId || currentRoomId,
+        createdAt: newState.createdAt || getServerNow(),
+        updatedAt: newState.updatedAt,
+        version: newState.version,
+        _lastSenderId: newState._lastSenderId,
+        status: newState.status || "waiting",
+        hostId: newState.hostId || null,
+        winnerId: newState.winnerId || null,
+        turnTimeLimit: newState.turnTimeLimit || 60,
+        currentTurnPlayerId: newState.currentTurnPlayerId || null,
+        turnStartTime: newState.turnStartTime || null,
+        deck: Array.isArray(newState.deck) ? newState.deck : [],
+        board: Array.isArray(newState.board) ? newState.board : [],
+        players: newState.players || {},
+        hands: newState.hands || {},
+        lastChat: newState.lastChat || null
+      };
+
+      lastAppliedRoomJson = JSON.stringify(normalizeFirebaseRoomState(payload));
+      database.ref(`rooms/${getSafeRoomKey(currentRoomId)}`).update(payload).catch((err) => {
+        console.error("寫入 Firebase 房間狀態失敗:", err);
+      });
       renderGame();
     }
 
-    // 監聽房間狀態變更
+    // 即時監聽 Firebase 路徑 rooms/{roomId} 狀態變化
     function attachRoomListener(roomId) {
-      if (database) {
-        database.ref(`rooms/${roomId}`).on("value", snapshot => {
-          const val = snapshot.val();
-          handleStateUpdate(val);
-        });
-      } else {
-        // 本地模式監聽廣播
-        if (syncChannel) {
-          syncChannel.onmessage = (e) => {
-            if (e.data && e.data.roomId === roomId) {
-              if (e.data.type === "ROOM_UPDATE") {
-                handleStateUpdate(e.data.state);
-              } else if (e.data.type === "ROOM_DELETED") {
-                handleStateUpdate(null);
-              }
-            }
-          };
+      detachRoomListener();
+      if (!database || !roomId) return;
+
+      activeFirebaseRoomRef = database.ref(`rooms/${getSafeRoomKey(roomId)}`);
+      activeFirebaseRoomHandler = (snapshot) => {
+        const rawVal = snapshot.val();
+        if (!rawVal) {
+          lastAppliedRoomJson = "";
+          handleStateUpdate(null);
+          return;
         }
-        // 輪詢 localStorage 作為本地多標籤頁備份
-        setInterval(() => {
-          if (!database && currentRoomId === roomId) {
-            const raw = localStorage.getItem(`rummikub_room_${roomId}`);
-            if (!raw) {
-              if (roomState) handleStateUpdate(null);
-            } else {
-              try {
-                const s = JSON.parse(raw);
-                if (JSON.stringify(s) !== JSON.stringify(roomState)) {
-                  handleStateUpdate(s);
-                }
-              } catch (err) {}
-            }
-          }
-        }, 1000);
+        const normalized = normalizeFirebaseRoomState(rawVal);
+        const stateJson = JSON.stringify(normalized);
+        // 若僅有 rooms/{roomId}/webrtcSignals 變動而遊戲狀態未變，跳過重複重繪避免畫面閃爍
+        if (stateJson === lastAppliedRoomJson && roomState) {
+          return;
+        }
+        lastAppliedRoomJson = stateJson;
+        handleStateUpdate(normalized);
+      };
+      activeFirebaseRoomRef.on("value", activeFirebaseRoomHandler);
+    }
+
+    // 當有玩家因關閉網頁觸發 onDisconnect() 自動移除時，自動接管房主權限、回收殘留手牌並防止回合卡死
+    function recoverDisconnectedRoomStateIfNeeded(state) {
+      if (!database || !currentRoomId || !state || isRecoveringDisconnect) return false;
+      const players = state.players || {};
+      const playerIds = Object.keys(players);
+      if (playerIds.length === 0) return false;
+
+      // 依座位號排序選出權威接班人 (確保多裝置間推舉結果唯一且一致)
+      const sortedIds = [...playerIds].sort((a, b) => {
+        const seatA = players[a] && typeof players[a].seat === "number" ? players[a].seat : 999;
+        const seatB = players[b] && typeof players[b].seat === "number" ? players[b].seat : 999;
+        if (seatA !== seatB) return seatA - seatB;
+        return a.localeCompare(b);
+      });
+
+      const hostMissing = !state.hostId || !players[state.hostId];
+      const designatedHostId = hostMissing ? sortedIds[0] : state.hostId;
+      if (designatedHostId !== myPlayerId) return false;
+
+      const orphanedHandIds = Object.keys(state.hands || {}).filter(pid => !players[pid]);
+      const turnPlayerMissing = state.status === "playing" && (!state.currentTurnPlayerId || !players[state.currentTurnPlayerId]);
+      const soleSurvivorInGame = state.status === "playing" && playerIds.length === 1;
+
+      if (!hostMissing && orphanedHandIds.length === 0 && !turnPlayerMissing && !soleSurvivorInGame) {
+        return false;
       }
+
+      isRecoveringDisconnect = true;
+      const nextState = JSON.parse(JSON.stringify(state));
+
+      if (hostMissing) {
+        nextState.hostId = myPlayerId;
+        Object.keys(nextState.players).forEach(pid => {
+          nextState.players[pid].isHost = (pid === myPlayerId);
+        });
+      }
+
+      if (orphanedHandIds.length > 0) {
+        if (!Array.isArray(nextState.deck)) nextState.deck = [];
+        orphanedHandIds.forEach(pid => {
+          const orphanCards = nextState.hands[pid] || [];
+          if (state.status === "playing" && orphanCards.length > 0) {
+            nextState.deck.push(...orphanCards);
+          }
+          delete nextState.hands[pid];
+        });
+        if (state.status === "playing") {
+          nextState.deck.sort(() => Math.random() - 0.5);
+        }
+      }
+
+      if (soleSurvivorInGame) {
+        const soleWinnerId = playerIds[0];
+        nextState.status = "finished";
+        nextState.winnerId = soleWinnerId;
+        nextState.currentTurnPlayerId = null;
+        if (nextState.players[soleWinnerId]) {
+          nextState.players[soleWinnerId].finalScore = nextState.players[soleWinnerId].finalScore || 0;
+        }
+        sound.playWin();
+        updateNotice("🎉 其他玩家已離線，恭喜您獲勝！", "info");
+      } else if (turnPlayerMissing) {
+        nextState.currentTurnPlayerId = sortedIds[0];
+        nextState.turnStartTime = getServerNow();
+        updateNotice("⚠️ 原出牌玩家已斷線，系統已自動切換至下一位玩家。", "warning");
+      }
+
+      syncRoomState(nextState);
+      setTimeout(() => { isRecoveringDisconnect = false; }, 300);
+      return true;
+    }
+
+    function resetToLobbyUi(noticeMsg, noticeType) {
+      closeLeaveConfirmModal(false);
+      detachRoomListener();
+      voiceChat.leaveRoom();
+      sessionStorage.removeItem("rummikub_room_id");
+      localStorage.removeItem("rummikub_room_id");
+      currentRoomId = "";
+      roomState = null;
+      localBoard = [];
+      localHand = [];
+      localHandOrder = [];
+      turnStartSnapshot = null;
+      selectedHandTileIds.clear();
+      selectedBoardItems = [];
+      document.getElementById("modal-waiting").style.display = "none";
+      document.getElementById("modal-gameover").style.display = "none";
+      document.getElementById("modal-lobby").style.display = "flex";
+      document.getElementById("header-room-info").innerText = "尚未進入房間";
+      document.getElementById("btn-leave-room").style.display = "none";
+      document.getElementById("btn-mic-toggle").style.display = "none";
+      if (noticeMsg) updateNotice(noticeMsg, noticeType || "info");
     }
 
     function handleStateUpdate(newState) {
-      if (!newState) {
-        // 房間已被刪除或解散
+      if (!newState || !newState.players || Object.keys(newState.players).length === 0) {
         if (currentRoomId) {
-          closeLeaveConfirmModal(false);
-          voiceChat.leaveRoom();
-          localStorage.removeItem("rummikub_room_id");
-          currentRoomId = "";
-          roomState = null;
-          localBoard = [];
-          localHand = [];
-          localHandOrder = [];
-          turnStartSnapshot = null;
-          document.getElementById("modal-waiting").style.display = "none";
-          document.getElementById("modal-gameover").style.display = "none";
-          document.getElementById("modal-lobby").style.display = "flex";
-          document.getElementById("header-room-info").innerText = "尚未進入房間";
-          document.getElementById("btn-leave-room").style.display = "none";
-          document.getElementById("btn-mic-toggle").style.display = "none";
-          updateNotice("該房間已關閉或被解散。", "warning");
+          resetToLobbyUi("該房間已關閉或被解散。", "warning");
         }
         return;
       }
 
-      // 被移出房間檢驗：若當前在房間內，但伺服器端玩家名單中已無自己
-      if (currentRoomId && newState.players && !newState.players[myPlayerId]) {
-        closeLeaveConfirmModal(false);
-        voiceChat.leaveRoom();
-        localStorage.removeItem("rummikub_room_id");
-        currentRoomId = "";
-        roomState = null;
-        localBoard = [];
-        localHand = [];
-        localHandOrder = [];
-        turnStartSnapshot = null;
-        document.getElementById("modal-waiting").style.display = "none";
-        document.getElementById("modal-gameover").style.display = "none";
-        document.getElementById("modal-lobby").style.display = "flex";
-        document.getElementById("header-room-info").innerText = "尚未進入房間";
-        document.getElementById("btn-leave-room").style.display = "none";
-        document.getElementById("btn-mic-toggle").style.display = "none";
-        updateNotice("⚠️ 你已離開或被移出房間", "alert");
+      // 若房間名單已不包含自己，代表已被房主踢出或離開
+      if (currentRoomId && !newState.players[myPlayerId]) {
+        resetToLobbyUi("⚠️ 你已離開或被移出房間", "alert");
         return;
       }
 
-      // 遊戲進行中若僅剩 1 名存活玩家：直接宣告該名留守玩家獲勝並進入結算
-      if (newState.status === "playing") {
-        const remainingPlayerIds = Object.keys(newState.players || {});
-        if (remainingPlayerIds.length === 1) {
-          const soleWinnerId = remainingPlayerIds[0];
-          newState.status = "finished";
-          newState.winnerId = soleWinnerId;
-          newState.currentTurnPlayerId = null;
-          if (newState.players[soleWinnerId]) {
-            newState.players[soleWinnerId].finalScore = newState.players[soleWinnerId].finalScore || 0;
-          }
-          if (soleWinnerId === myPlayerId) {
-            sound.playWin();
-            updateNotice("🎉 其他玩家已全數離開，恭喜您獲勝！", "info");
-          }
-        }
+      // 若有其他玩家因斷線 (onDisconnect) 移除，自動執行房主權限移交、回收殘留手牌與防卡死切換
+      if (recoverDisconnectedRoomStateIfNeeded(newState)) {
+        return;
       }
 
       const prevTurnPlayer = roomState ? roomState.currentTurnPlayerId : null;
       roomState = newState;
 
-      // 維持同房間語音連線並同步 Peer 名單 (等待室 -> 遊戲中不中斷)
+      // 維持同房間 WebRTC 語音連線並同步 Peer 名單 (等待室 -> 遊戲中不中斷)
       if (currentRoomId) {
         voiceChat.joinRoom(currentRoomId);
         voiceChat.syncPeers(roomState.players);
       }
 
-      // 檢查語音氣泡
-      if (roomState.lastChat && Date.now() - roomState.lastChat.timestamp < 3500) {
+      // 檢查互動表情氣泡
+      if (roomState.lastChat && Math.abs(getServerNow() - roomState.lastChat.timestamp) < 3500) {
         showChatBubble(roomState.lastChat.playerId, roomState.lastChat.emoji);
       }
 
-      // 若輪到自己，播放提示音
+      // 若輪到自己，播放提示音並初始化本回合快照
       if (roomState.status === "playing" && roomState.currentTurnPlayerId === myPlayerId && prevTurnPlayer !== myPlayerId) {
         sound.playMyTurn();
         initMyTurn();
@@ -3108,103 +3256,183 @@
       renderGame();
     }
 
-    // 加入/建立房間
-    async function joinOrCreateRoom(roomId, nickname) {
-      // 順便檢查並自動清理超過 3 小時未更新或已無玩家的過期舊房間
-      cleanExpiredRooms();
+    // 嚴格同房號加入/建立房間 (先讀取 Firebase rooms/{roomId}，並透過原子交易確保不產生雙房主)
+    async function joinOrCreateRoom(rawRoomId, nickname) {
+      const roomId = String(rawRoomId || "").trim();
+      if (!roomId || isJoiningRoom) return;
 
-      currentRoomId = roomId;
-      myPlayerName = nickname;
-      localStorage.setItem("rummikub_room_id", roomId);
-      localStorage.setItem("rummikub_player_name", nickname);
-
-      let existing = null;
-      if (database) {
-        const snap = await database.ref(`rooms/${roomId}`).once("value");
-        existing = snap.val();
-      } else {
-        const raw = localStorage.getItem(`rummikub_room_${roomId}`);
-        if (raw) existing = JSON.parse(raw);
+      if (!database) {
+        alert("Firebase Realtime Database 尚未初始化成功，請檢查網路連線並重新整理頁面。");
+        return;
       }
 
-      // 防衝突驗證：若遊戲已開始且玩家不在名單內
-      if (existing && existing.status === "playing") {
-        const isPlayerInRoom = existing.players && existing.players[myPlayerId];
-        if (!isPlayerInRoom) {
-          alert("該房間遊戲進行中，請更換房號！");
-          return;
+      isJoiningRoom = true;
+
+      const enterBtn = document.getElementById("btn-enter-room");
+      const prevBtnText = enterBtn ? enterBtn.innerText : "";
+      if (enterBtn) {
+        enterBtn.disabled = true;
+        enterBtn.innerText = "🌐 連線 Firebase 房間中...";
+      }
+
+      try {
+        cleanExpiredRooms();
+        detachRoomListener();
+
+        myPlayerName = nickname;
+        localStorage.setItem("rummikub_player_name", nickname);
+
+        const safeRoomKey = getSafeRoomKey(roomId);
+        const roomRef = database.ref(`rooms/${safeRoomKey}`);
+
+        // 步驟 1：先讀取 Firebase 路徑 rooms/{roomId} 現有資料進行前置檢查
+        const existingSnap = await roomRef.once("value");
+        const existingVal = existingSnap.val();
+        if (isValidActiveRoom(existingVal)) {
+          const existingPlayers = existingVal.players || {};
+          if (existingVal.status === "playing" && !existingPlayers[myPlayerId]) {
+            sessionStorage.removeItem("rummikub_room_id");
+            alert("該房間遊戲進行中，請更換房號！");
+            return;
+          }
+          if (existingVal.status === "finished" && !existingPlayers[myPlayerId]) {
+            sessionStorage.removeItem("rummikub_room_id");
+            alert("該房間本局已結算，請等待房主重開或更換房號！");
+            return;
+          }
+          if (!existingPlayers[myPlayerId] && Object.keys(existingPlayers).length >= 6) {
+            sessionStorage.removeItem("rummikub_room_id");
+            alert("該房間已滿 6 人！");
+            return;
+          }
         }
-      }
 
-      if (!existing) {
-        // 房主建立全新房間
-        const newRoom = {
-          roomId: roomId,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          status: "waiting", // waiting | playing | finished
-          hostId: myPlayerId,
-          turnTimeLimit: 60,
-          currentTurnPlayerId: null,
-          turnStartTime: null,
-          deck: [],
-          board: [],
-          players: {
-            [myPlayerId]: {
+        // 步驟 2：透過 Firebase Realtime Database 原子交易 (transaction) 寫入，確保多裝置同時進房絕不產生雙房主
+        let rejectReason = "";
+        let createdNewRoom = false;
+
+        const txResult = await roomRef.transaction((currentData) => {
+          rejectReason = "";
+          const nowTs = getServerNow();
+
+          if (!isValidActiveRoom(currentData)) {
+            // 房間不存在 -> 建立新房間節點並成為房主 (Host)
+            createdNewRoom = true;
+            return {
+              roomId: roomId,
+              createdAt: nowTs,
+              updatedAt: nowTs,
+              version: 1,
+              _lastSenderId: myPlayerId,
+              status: "waiting",
+              hostId: myPlayerId,
+              winnerId: null,
+              turnTimeLimit: 60,
+              currentTurnPlayerId: null,
+              turnStartTime: null,
+              deck: [],
+              board: [],
+              players: {
+                [myPlayerId]: {
+                  id: myPlayerId,
+                  name: nickname,
+                  seat: 0,
+                  isHost: true,
+                  isIceBroken: false,
+                  handCount: 0,
+                  totalThinkingTime: 0,
+                  micOn: false
+                }
+              },
+              hands: {},
+              lastChat: null
+            };
+          }
+
+          // 房間已存在 -> 嚴格檢查人數與狀態
+          createdNewRoom = false;
+          const players = currentData.players || {};
+          if (currentData.status === "playing" && !players[myPlayerId]) {
+            rejectReason = "該房間遊戲進行中，請更換房號！";
+            return;
+          }
+          if (currentData.status === "finished" && !players[myPlayerId]) {
+            rejectReason = "該房間本局已結算，請等待房主重開或更換房號！";
+            return;
+          }
+          if (!players[myPlayerId] && Object.keys(players).length >= 6) {
+            rejectReason = "該房間已滿 6 人！";
+            return;
+          }
+
+          // 強制以訪客玩家身分加入（若原本即為該房房主則保留房主身分），同時保留現有 webrtcSignals
+          const isAlreadyHost = currentData.hostId === myPlayerId;
+          currentData.updatedAt = nowTs;
+          currentData.version = (currentData.version || 0) + 1;
+          currentData._lastSenderId = myPlayerId;
+
+          if (!players[myPlayerId]) {
+            const usedSeats = new Set(Object.values(players).map(p => p.seat));
+            let nextSeat = 0;
+            while (usedSeats.has(nextSeat)) nextSeat++;
+            players[myPlayerId] = {
               id: myPlayerId,
               name: nickname,
-              seat: 0,
-              isHost: true,
+              seat: nextSeat,
+              isHost: false,
               isIceBroken: false,
               handCount: 0,
               totalThinkingTime: 0,
               micOn: false
-            }
-          },
-          hands: {},
-          lastChat: null
-        };
-        syncRoomState(newRoom);
-      } else {
-        // 房客加入房間 (或斷線重連)
-        existing.updatedAt = Date.now();
-        const players = existing.players || {};
-        if (!players[myPlayerId]) {
-          const count = Object.keys(players).length;
-          if (count >= 6) {
-            alert("該房間已滿 6 人！");
-            return;
+            };
+          } else {
+            players[myPlayerId].name = nickname;
+            players[myPlayerId].isHost = isAlreadyHost;
+            players[myPlayerId].micOn = false;
           }
-          players[myPlayerId] = {
-            id: myPlayerId,
-            name: nickname,
-            seat: count,
-            isHost: false,
-            isIceBroken: false,
-            handCount: 0,
-            totalThinkingTime: 0,
-            micOn: false
-          };
-          existing.players = players;
-          syncRoomState(existing);
-        } else {
-          // 斷線重連更新暱稱並重置預設靜音狀態
-          players[myPlayerId].name = nickname;
-          players[myPlayerId].micOn = false;
-          existing.players = players;
-          syncRoomState(existing);
+          currentData.players = players;
+          return currentData;
+        });
+
+        if (rejectReason) {
+          sessionStorage.removeItem("rummikub_room_id");
+          alert(rejectReason);
+          return;
         }
-      }
+        if (!txResult.committed || !txResult.snapshot.val()) {
+          throw new Error("無法寫入 Firebase Realtime Database，請確認資料庫權限規則是否開放讀寫。");
+        }
 
-      // 進入房間即建立語音連線通道 (預設靜音，不中斷跨等待室與牌桌)
-      voiceChat.joinRoom(roomId);
-      attachRoomListener(roomId);
-      document.getElementById("modal-lobby").style.display = "none";
+        const joinedRoomState = normalizeFirebaseRoomState(txResult.snapshot.val());
+        currentRoomId = roomId;
+        sessionStorage.setItem("rummikub_room_id", roomId);
 
-      if (!isFirebaseConfigured) {
-        updateNotice("💡 目前為【示範/本地連線模式】（可開多分頁或加測試玩家）。在 index.html 填入 Firebase 即享跨裝置線上對戰！", "warning");
-      } else {
-        updateNotice(`🟢 已連線至 Firebase 房間：${roomId}`, "info");
+        // 步驟 3：註冊 Firebase onDisconnect() 自動斷線清理、開啟 WebRTC 語音通道與即時監聽房間狀態
+        registerPlayerDisconnectHandlers(roomId);
+        voiceChat.joinRoom(roomId);
+        roomState = joinedRoomState;
+        lastAppliedRoomJson = JSON.stringify(joinedRoomState);
+        attachRoomListener(roomId);
+        voiceChat.syncPeers(roomState.players);
+
+        document.getElementById("modal-lobby").style.display = "none";
+        renderGame();
+
+        if (createdNewRoom) {
+          updateNotice(`🟢 已建立房間「${roomId}」（您為房主），邀請好友輸入相同房號即可同房遊玩！`, "info");
+        } else {
+          updateNotice(`🟢 已成功加入房間「${roomId}」（跨裝置即時同步中）`, "info");
+        }
+      } catch (err) {
+        console.error("加入 Firebase 房間失敗:", err);
+        updateNotice("⚠️ Firebase 房間連線失敗，請檢查網路狀態後重試。", "alert");
+        alert("Firebase 房間連線失敗：" + (err && err.message ? err.message : "請確認網路連線後再試一次。"));
+      } finally {
+        isJoiningRoom = false;
+        if (enterBtn) {
+          enterBtn.disabled = false;
+          enterBtn.innerText = prevBtnText || "進入房間 / 建立房間";
+        }
       }
     }
 
@@ -3239,7 +3467,8 @@
       roomState.board = [];
       roomState.hands = hands;
       roomState.currentTurnPlayerId = firstPlayerId;
-      roomState.turnStartTime = Date.now();
+      roomState.turnStartTime = getServerNow();
+      roomState.winnerId = null;
       localHandOrder = [];
 
       if (firstPlayerId === myPlayerId) {
@@ -3492,7 +3721,7 @@
       if (currentHand.length === 0) {
         sound.playWin();
 
-        const now = Date.now();
+        const now = getServerNow();
         const elapsedSec = Math.min(
           roomState.turnTimeLimit || 60,
           Math.max(1, Math.floor((now - (roomState.turnStartTime || now)) / 1000))
@@ -3523,7 +3752,7 @@
       const currentHand = localHand || [];
       // 同步鎖定剩餘手牌順序，徹底移除已出牌 ID 防範幽靈牌
       lockLocalHandOrder(currentHand);
-      const now = Date.now();
+      const now = getServerNow();
       const elapsedSec = Math.min(
         roomState.turnTimeLimit || 60,
         Math.max(1, Math.floor((now - (roomState.turnStartTime || now)) / 1000))
@@ -3552,7 +3781,7 @@
       const nextPlayerId = playerIds[nextIdx];
 
       roomState.currentTurnPlayerId = nextPlayerId;
-      roomState.turnStartTime = Date.now();
+      roomState.turnStartTime = getServerNow();
 
       syncRoomState(roomState);
     }
@@ -3698,27 +3927,27 @@
           }
         }
 
+        // 先取消斷線自動清理器，避免主動退出後重複觸發
+        cancelPlayerDisconnectHandlers();
+
         // 徹底從玩家與手牌名單移除
         delete roomState.players[leavingPlayerId];
         if (roomState.hands) delete roomState.hands[leavingPlayerId];
 
+        const safeLeavingKey = getSafeRoomKey(leavingRoomId);
+
         if (database && leavingRoomId) {
-          await database.ref(`rooms/${leavingRoomId}/players/${leavingPlayerId}`).remove();
-          await database.ref(`rooms/${leavingRoomId}/hands/${leavingPlayerId}`).remove();
+          await database.ref(`rooms/${safeLeavingKey}/players/${leavingPlayerId}`).remove().catch(() => {});
+          await database.ref(`rooms/${safeLeavingKey}/hands/${leavingPlayerId}`).remove().catch(() => {});
+          await database.ref(`rooms/${safeLeavingKey}/webrtcSignals/${leavingPlayerId}`).remove().catch(() => {});
         }
 
         const remainingPlayerIds = Object.keys(roomState.players || {});
 
-        // 情況 1：房間內活躍玩家人數歸零 -> 徹底從資料庫刪除該空房間與語音信令節點
+        // 情況 1：房間內活躍玩家人數歸零 -> 徹底從 Firebase 清除整個房間節點 (含 webrtcSignals)
         if (remainingPlayerIds.length === 0) {
           if (database && leavingRoomId) {
-            await database.ref(`rooms/${leavingRoomId}`).remove();
-            await database.ref(`rtc_signals/${leavingRoomId}`).remove().catch(() => {});
-          } else {
-            localStorage.removeItem(`rummikub_room_${leavingRoomId}`);
-            if (syncChannel) {
-              syncChannel.postMessage({ type: "ROOM_DELETED", roomId: leavingRoomId });
-            }
+            await database.ref(`rooms/${safeLeavingKey}`).remove().catch(() => {});
           }
         }
         // 情況 2：遊戲進行中且僅剩 1 名玩家 -> 直接判定該名留守玩家獲勝
@@ -3753,35 +3982,15 @@
           if (isPlaying && wasCurrentTurn) {
             const nextPlayerId = remainingPlayerIds[0];
             roomState.currentTurnPlayerId = nextPlayerId;
-            roomState.turnStartTime = Date.now();
+            roomState.turnStartTime = getServerNow();
           }
 
           syncRoomState(roomState);
         }
       }
 
-      // 釋放麥克風資源並斷開同房間語音連線
-      voiceChat.leaveRoom();
-
-      // 清除本地 localStorage 重連紀錄
-      localStorage.removeItem("rummikub_room_id");
-      currentRoomId = "";
-      roomState = null;
-      localBoard = [];
-      localHand = [];
-      localHandOrder = [];
-      turnStartSnapshot = null;
-      selectedHandTileIds.clear();
-      selectedBoardItems = [];
-
-      // 畫面切換回首頁大廳
-      document.getElementById("modal-waiting").style.display = "none";
-      document.getElementById("modal-gameover").style.display = "none";
-      document.getElementById("modal-lobby").style.display = "flex";
-      document.getElementById("header-room-info").innerText = "尚未進入房間";
-      document.getElementById("btn-leave-room").style.display = "none";
-      document.getElementById("btn-mic-toggle").style.display = "none";
-      updateNotice("已離開房間。", "info");
+      // 卸載 Firebase 監聽、釋放麥克風資源、清除重連紀錄並返回首頁大廳
+      resetToLobbyUi("已離開房間。", "info");
     }
 
     // 房主踢出玩家機制
@@ -3800,10 +4009,10 @@
       if (roomState.hands) delete roomState.hands[targetId];
 
       if (database && currentRoomId) {
-        database.ref(`rooms/${currentRoomId}/players/${targetId}`).remove();
-        if (roomState.hands) {
-          database.ref(`rooms/${currentRoomId}/hands/${targetId}`).remove();
-        }
+        const safeRoomKey = getSafeRoomKey(currentRoomId);
+        database.ref(`rooms/${safeRoomKey}/players/${targetId}`).remove().catch(() => {});
+        database.ref(`rooms/${safeRoomKey}/hands/${targetId}`).remove().catch(() => {});
+        database.ref(`rooms/${safeRoomKey}/webrtcSignals/${targetId}`).remove().catch(() => {});
       }
 
       syncRoomState(roomState);
@@ -3843,7 +4052,7 @@
       const nextPlayerId = playerIds[nextIdx];
 
       roomState.currentTurnPlayerId = nextPlayerId;
-      roomState.turnStartTime = Date.now();
+      roomState.turnStartTime = getServerNow();
 
       updateNotice(`⏰ 玩家【${player.name}】連線中斷或超時未出牌，系統已自動為其罰抽 1 張並換下一位。`, "alert");
       syncRoomState(roomState);
@@ -3888,19 +4097,14 @@
     // 快捷表情與短語
     // ==========================================
     function sendEmoji(emoji) {
-      if (!roomState || !currentRoomId) return;
+      if (!roomState || !currentRoomId || !database) return;
       sound.playClick();
       const chatData = {
         playerId: myPlayerId,
         emoji: emoji,
-        timestamp: Date.now()
+        timestamp: getServerNow()
       };
-      if (database) {
-        database.ref(`rooms/${currentRoomId}/lastChat`).set(chatData);
-      } else {
-        roomState.lastChat = chatData;
-        syncRoomState(roomState);
-      }
+      database.ref(`rooms/${getSafeRoomKey(currentRoomId)}/lastChat`).set(chatData).catch(() => {});
     }
     window.sendEmoji = sendEmoji;
 
@@ -4034,7 +4238,8 @@
 
       // 更新置頂常駐高可視度倒數計時膠囊
       const limit = roomState.turnTimeLimit || 60;
-      const elapsed = Math.floor((Date.now() - (roomState.turnStartTime || Date.now())) / 1000);
+      const nowServer = getServerNow();
+      const elapsed = Math.floor((nowServer - (roomState.turnStartTime || nowServer)) / 1000);
       const remaining = Math.max(0, limit - elapsed);
       updateTimerCapsule(remaining, limit);
     }
@@ -4132,7 +4337,8 @@
       const players = roomState.players || {};
 
       const limit = roomState.turnTimeLimit || 60;
-      const elapsed = Math.floor((Date.now() - (roomState.turnStartTime || Date.now())) / 1000);
+      const nowServer = getServerNow();
+      const elapsed = Math.floor((nowServer - (roomState.turnStartTime || nowServer)) / 1000);
       const remaining = Math.max(0, limit - elapsed);
 
       Object.values(players).forEach(p => {
@@ -4152,12 +4358,12 @@
         const thinkDisplay = thinkSec >= 60 ? `${Math.floor(thinkSec / 60)}分${thinkSec % 60}秒` : `${thinkSec}秒`;
 
         const timerBadgeHtml = isCurrentTurn
-          ? `<span style="font-weight:bold; color:${remaining <= 10 ? "#ef4444" : "#facc15"};">⏳ ${remaining}s</span>`
+          ? `<span style="font-weight:400; color:${remaining <= 10 ? "#ef4444" : "#facc15"};">⏳ ${remaining}s</span>`
           : `<span>⏱ ${thinkDisplay}</span>`;
 
         const hasChat = roomState.lastChat &&
           roomState.lastChat.playerId === p.id &&
-          (Date.now() - roomState.lastChat.timestamp < 3500);
+          Math.abs(nowServer - roomState.lastChat.timestamp) < 3500;
 
         const chatBubbleHtml = hasChat
           ? `<div class="chat-bubble">${roomState.lastChat.emoji}</div>`
@@ -4750,7 +4956,7 @@
         tr.innerHTML = `
           <td>${idx === 0 ? "🥇 冠軍" : idx === 1 ? "🥈 亞軍" : idx === 2 ? "🥉 季軍" : `#${idx + 1}`}</td>
           <td>${p.name} ${p.id === myPlayerId ? "(我)" : ""}</td>
-          <td style="font-weight:bold; color:${p.finalScore >= 0 ? "#4ade80" : "#f87171"};">${scoreDisplay} 分</td>
+          <td style="font-weight:400; color:${p.finalScore >= 0 ? "#4ade80" : "#f87171"};">${scoreDisplay} 分</td>
           <td>${thinkDisplay}</td>
         `;
         tbody.appendChild(tr);
@@ -4843,9 +5049,10 @@
           return;
         }
 
-        const startTime = roomState.turnStartTime || Date.now();
+        const nowServer = getServerNow();
+        const startTime = roomState.turnStartTime || nowServer;
         const limit = roomState.turnTimeLimit || 60;
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const elapsed = Math.floor((nowServer - startTime) / 1000);
         const remaining = Math.max(0, limit - elapsed);
 
         // 同步置頂常駐倒數計時膠囊
