@@ -1234,24 +1234,30 @@
       html, body {
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
+        min-height: 0;
         overflow: hidden;
         margin: 0;
         padding: 0;
       }
       #app-viewport-root {
         position: fixed;
-        top: 0;
-        left: 100vw;
+        top: 50%;
+        left: 50%;
         width: 100vh;
+        width: 100dvh;
         height: 100vw;
         min-height: 0;
-        transform-origin: top left;
-        transform: rotate(90deg);
-        overflow-y: auto;
-        overflow-x: hidden;
+        transform-origin: center center;
+        transform: translate(-50%, -50%) rotate(90deg);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
         background: radial-gradient(circle at 50% 35%, var(--felt-green-light) 0%, var(--felt-green-mid) 50%, var(--felt-green-dark) 100%);
       }
-      #rack-tiles-shelf .rummi-tile {
+      #rack-tiles-shelf,
+      #rack-tiles-shelf .rummi-tile,
+      .players-strip {
         touch-action: none; /* 旋轉後由程式精準區分橫向捲動與向上拖曳 */
       }
       .felt-board {
@@ -1259,112 +1265,218 @@
       }
     }
 
-    /* 手機橫向緊湊排版 (包含直向強制旋轉與原生橫向手機，公桌固定 32x46px 確保可看清 3~4 排) */
+    /* 原生橫向手機同樣滿版鎖定 100dvh，避免底部留白或畫面裁切 */
+    @media screen and (max-height: 500px) and (orientation: landscape) {
+      html, body {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+      }
+      #app-viewport-root {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    /* 手機橫向緊湊全螢幕排版 (包含直向強制旋轉與原生橫向手機，公桌固定 32x46px 並自動填滿中央高度) */
     @media screen and (max-width: 767px) and (orientation: portrait),
            screen and (max-width: 920px) and (orientation: portrait) and (pointer: coarse),
            screen and (max-height: 500px) and (orientation: landscape) {
       header {
-        padding: 4px 10px;
+        position: relative;
+        top: auto;
+        flex-shrink: 0;
+        flex-wrap: nowrap;
+        width: 100%;
+        padding: 3px 8px;
+        gap: 6px;
+      }
+      .brand {
+        flex: 1 1 auto;
+        min-width: 0;
+        gap: 6px;
+        overflow: hidden;
+      }
+      .brand > div {
+        min-width: 0;
+        overflow: hidden;
       }
       .brand-logo {
-        width: 26px;
-        height: 26px;
-        font-size: 14px;
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+        border-radius: 6px;
+        flex-shrink: 0;
       }
       .brand-title {
-        font-size: 0.88rem;
+        font-size: 0.78rem;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .brand-sub {
-        font-size: 0.68rem;
+        font-size: 0.64rem;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .header-actions {
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+        gap: 4px;
       }
       .btn-icon {
-        padding: 4px 8px;
-        font-size: 0.74rem;
+        padding: 3px 6px;
+        font-size: 0.68rem;
+        gap: 3px;
+        border-radius: 6px;
+        white-space: nowrap;
+        flex-shrink: 0;
       }
       #notice-bar {
-        padding: 2px 10px;
-        font-size: 0.7rem;
+        flex-shrink: 0;
+        padding: 2px 8px;
+        font-size: 0.68rem;
+        line-height: 1.25;
       }
       #game-container {
-        padding: 4px 8px 108px 8px;
+        flex: 1 1 0%;
+        min-height: 0;
+        max-width: none;
+        width: 100%;
+        padding: 2px 6px 4px 6px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
       .players-strip {
-        padding: 22px 4px 4px 4px;
-        gap: 6px;
+        flex-shrink: 0;
+        padding: 14px 2px 3px 2px;
+        gap: 5px;
       }
       .player-card {
-        min-width: 140px;
-        padding: 4px 8px;
-        gap: 6px;
-      }
-      .player-avatar {
-        width: 26px;
-        height: 26px;
-        font-size: 0.78rem;
-      }
-      .player-name {
-        font-size: 0.74rem;
-      }
-      .player-sub {
-        font-size: 0.66rem;
-      }
-      .timer-capsule-bar {
-        margin: 1px 0 4px 0;
-        top: 34px;
-      }
-      .timer-capsule {
-        padding: 3px 12px;
-        font-size: 0.78rem;
-      }
-      .capsule-sec {
-        font-size: 0.94rem;
-      }
-      .board-controls-bar {
-        padding: 3px 10px;
-        margin-bottom: 5px;
-      }
-      .status-text {
-        font-size: 0.74rem;
-      }
-      .btn-action-primary {
-        padding: 4px 10px;
-        font-size: 0.76rem;
-      }
-      .felt-board {
-        min-height: 150px;
-        max-height: 62vh;
-        overflow-y: auto;
-        padding: 6px;
-        gap: 6px;
-      }
-      .tile-set-card {
-        min-width: 118px;
-        padding: 3px 5px;
-        gap: 2px;
+        min-width: 128px;
+        padding: 3px 7px;
+        gap: 5px;
         border-radius: 9px;
       }
-      .tile-set-header {
+      .player-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 0.74rem;
+      }
+      .player-name {
+        font-size: 0.72rem;
+      }
+      .player-sub {
         font-size: 0.62rem;
+        gap: 4px;
+      }
+      .chat-bubble {
+        top: -22px;
+        padding: 2px 8px;
+        font-size: 0.72rem;
+      }
+      .btn-peer-mute {
+        min-width: 28px;
+        min-height: 28px;
+        font-size: 0.78rem;
+        padding: 2px;
+      }
+      .timer-capsule-bar {
+        position: relative;
+        top: auto;
+        flex-shrink: 0;
+        margin: 1px 0 3px 0;
+      }
+      .timer-capsule {
+        max-width: 100%;
+        padding: 2px 12px;
+        font-size: 0.74rem;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      #capsule-turn-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .capsule-sec {
+        font-size: 0.88rem;
+        flex-shrink: 0;
+      }
+      .board-controls-bar {
+        flex-shrink: 0;
+        flex-wrap: nowrap;
+        padding: 2px 8px;
+        margin-bottom: 4px;
+        gap: 6px;
+      }
+      .status-text {
+        font-size: 0.72rem;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .btn-action-primary {
+        padding: 3px 9px;
+        font-size: 0.72rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .felt-board {
+        flex: 1 1 0%;
+        min-height: 0;
+        max-height: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 5px;
+        gap: 5px;
+        border-radius: 10px;
+      }
+      .felt-empty-hint {
+        font-size: 0.82rem;
+      }
+      .tile-set-card {
+        min-width: 112px;
+        padding: 3px 5px;
+        gap: 2px;
+        border-radius: 8px;
+      }
+      .tile-set-header {
+        font-size: 0.6rem;
         padding-bottom: 2px;
         gap: 4px;
       }
       .set-tag {
-        font-size: 0.6rem;
+        font-size: 0.58rem;
         padding: 1px 4px;
       }
       .tile-set-tiles {
-        min-height: 48px;
+        min-height: 46px;
         gap: 3px;
         padding: 1px 0;
       }
       .tile-set-actions {
-        min-height: 20px;
+        min-height: 18px;
       }
       .btn-set-sub {
         padding: 2px 6px;
-        font-size: 0.64rem;
+        font-size: 0.62rem;
       }
-      /* 手機橫向公桌固定牌卡尺寸：約寬 32px、高 46px */
+      /* 手機橫向公桌固定牌卡尺寸：寬 32px、高 46px */
       .felt-board .rummi-tile {
         width: 32px;
         height: 46px;
@@ -1382,45 +1494,92 @@
       .felt-board .tile-joker-icon {
         font-size: 1.02rem;
       }
-      /* 手機橫向手牌區牌磚保持清晰好點好拖 */
-      #rack-tiles-shelf .rummi-tile {
-        width: 36px;
-        height: 50px;
-        flex: 0 0 36px;
-      }
-      #rack-tiles-shelf .tile-num {
-        font-size: 1.18rem;
-      }
-      #rack-tiles-shelf .tile-joker-icon {
-        font-size: 1.15rem;
-      }
+      /* 手機橫向底部手牌區貼齊底部邊緣，絕不覆蓋公桌亦不留綠邊空白 */
       .player-rack-dock {
-        padding: 5px 8px 6px 8px;
+        position: relative;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        flex-shrink: 0;
+        width: 100%;
+        max-width: none;
+        padding: 4px 8px 5px 8px;
+        border-top-width: 2px;
       }
       .rack-header {
-        margin-bottom: 4px;
+        flex-wrap: nowrap;
+        margin-bottom: 3px;
         gap: 4px;
       }
+      .rack-tools {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        gap: 3px;
+        overflow: visible;
+      }
+      .rack-tools > span {
+        white-space: nowrap;
+        font-size: 0.7rem !important;
+        margin-right: 1px !important;
+        flex-shrink: 0;
+      }
       .rack-btn-sort {
-        padding: 3px 7px;
-        font-size: 0.72rem;
+        padding: 2px 5px;
+        font-size: 0.66rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .rack-turn-controls {
+        flex-shrink: 0;
+        flex-wrap: nowrap;
+        gap: 3px;
       }
       .btn-turn-reset, .btn-turn-main {
-        padding: 4px 10px;
-        font-size: 0.76rem;
+        padding: 2px 7px;
+        font-size: 0.68rem;
+        white-space: nowrap;
+        flex-shrink: 0;
       }
+      /* 手機橫向手牌區牌卡寬度微調為 34x46px 並支援順暢橫向滑動，14 張起始手牌可完整瀏覽與點擊 */
       .rack-tiles-shelf {
-        min-height: 58px;
-        padding: 5px 22px 5px 6px;
-        gap: 5px;
+        min-height: 54px;
+        padding: 4px 24px 4px 6px;
+        gap: 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      #rack-tiles-shelf .rummi-tile {
+        width: 34px;
+        height: 46px;
+        flex: 0 0 34px;
+        border-radius: 6px;
+      }
+      #rack-tiles-shelf .tile-num {
+        font-size: 1.12rem;
+      }
+      #rack-tiles-shelf .tile-dot {
+        width: 5px;
+        height: 5px;
+        margin-top: 2px;
+      }
+      #rack-tiles-shelf .tile-joker-icon {
+        font-size: 1.08rem;
+      }
+      .rack-shelf-peek-hint {
+        width: 20px;
+        font-size: 1rem;
+      }
+      .modal-backdrop {
+        padding: 8px;
       }
       .modal-card {
-        max-height: 92%;
+        max-height: 94%;
         overflow-y: auto;
-        padding: 14px 18px;
+        padding: 12px 16px;
       }
       .modal-title {
-        font-size: 1.05rem;
+        font-size: 1.02rem;
         margin-bottom: 8px;
       }
       .form-group {
@@ -2315,7 +2474,7 @@
             this.micPermissionDenied = true;
             this.micEnabled = false;
             this.updateMicButtonsUI();
-            updateNotice("🎤 無法存取麥克風，但您仍可聽見其他玩家聲音", "warning");
+            updateNotice("🎤 無法存取麥克風（若使用 LINE 內建瀏覽器請改用 Chrome 或 Safari 開啟），但您仍可聽見其他玩家聲音", "warning");
             return;
           }
 
@@ -2348,7 +2507,7 @@
             this.micPermissionDenied = true;
             this.micEnabled = false;
             this.updateMicButtonsUI();
-            updateNotice("🎤 無法存取麥克風，但您仍可聽見其他玩家聲音", "warning");
+            updateNotice("🎤 無法存取麥克風（若使用 LINE 內建瀏覽器請改用 Chrome 或 Safari 開啟），但您仍可聽見其他玩家聲音", "warning");
             return;
           }
         }
@@ -2648,9 +2807,10 @@
     // 將瀏覽器視窗座標 (clientX, clientY) 轉換為旋轉容器內之局部座標 (x, y)
     function mapClientToLocal(clientX, clientY) {
       if (isForcedLandscape()) {
+        const rect = getViewportRoot().getBoundingClientRect();
         return {
-          x: clientY,
-          y: window.innerWidth - clientX
+          x: clientY - rect.top,
+          y: rect.right - clientX
         };
       }
       return { x: clientX, y: clientY };
@@ -5220,7 +5380,7 @@
       };
       voiceChat.updateMicButtonsUI();
 
-      // 手機強制橫向模式下，讓公桌區域支援順暢的旋轉軸向觸控捲動
+      // 手機強制橫向模式下，讓公桌區域、手牌架背景與玩家條支援順暢的旋轉軸向觸控捲動
       const feltBoardEl = document.getElementById("felt-board");
       if (feltBoardEl) {
         let boardScrollLastY = null;
@@ -5240,6 +5400,28 @@
         feltBoardEl.addEventListener("pointerup", stopBoardScroll, { passive: true });
         feltBoardEl.addEventListener("pointercancel", stopBoardScroll, { passive: true });
       }
+
+      const bindRotatedHorizontalScroll = (el, ignoreSelector) => {
+        if (!el) return;
+        let lastLocalX = null;
+        el.addEventListener("pointerdown", (e) => {
+          if (!isForcedLandscape() || e.pointerType !== "touch") return;
+          if (ignoreSelector && e.target && e.target.closest && e.target.closest(ignoreSelector)) return;
+          lastLocalX = mapClientToLocal(e.clientX, e.clientY).x;
+        }, { passive: true });
+        el.addEventListener("pointermove", (e) => {
+          if (lastLocalX === null || !isForcedLandscape() || e.pointerType !== "touch") return;
+          const currLocalX = mapClientToLocal(e.clientX, e.clientY).x;
+          el.scrollLeft -= (currLocalX - lastLocalX);
+          lastLocalX = currLocalX;
+          e.preventDefault();
+        }, { passive: false });
+        const stopScroll = () => { lastLocalX = null; };
+        el.addEventListener("pointerup", stopScroll, { passive: true });
+        el.addEventListener("pointercancel", stopScroll, { passive: true });
+      };
+      bindRotatedHorizontalScroll(document.getElementById("rack-tiles-shelf"), ".rummi-tile");
+      bindRotatedHorizontalScroll(document.getElementById("players-strip"), "button");
 
       // 使用者互動時同步喚醒 AudioContext 與遠端音訊播放 (確保手機 Safari / Chrome 正常播放遠端語音)
       document.addEventListener("pointerdown", () => voiceChat.unlockRemoteAudio(), { passive: true });
